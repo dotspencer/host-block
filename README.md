@@ -14,10 +14,7 @@ domain blocking for non-technical family members or friends, then forget about i
   later updates never ask for a password
 - Enable/disable blocking straight from the dropdown (removes the block section
   from the hosts file)
-- Gumroad-licensed: free Personal (1 device) or paid Family (unlimited devices),
-  with the license email shown right in the dropdown and full purchase details
-  (name, email, tier, purchase date, redacted card) in the License window to
-  discourage sharing keys online
+- Gumroad-licensed: free Personal (1 device) or paid Family (unlimited devices).
 
 ## Building
 
@@ -62,6 +59,7 @@ macOS requires root to edit `/etc/hosts`. To keep it to a single admin prompt:
 2. From then on the app runs the helper via `sudo -n` — no password, no prompt.
 
 The helper only ever:
+
 - replaces the `#HOSTBLOCK_START`…`#HOSTBLOCK_END` section of `/etc/hosts`,
   accepting only lines matching `0.0.0.0 <domain>` (revalidated in the helper
   itself with a strict regex),

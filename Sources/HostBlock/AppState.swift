@@ -5,10 +5,8 @@ import ServiceManagement
 import SwiftUI
 
 enum AppConstants {
-    /// Gumroad product ID from the product's edit page (Settings → Advanced,
-    /// or the `product_id` shown in the license key section).
-    static let gumroadProductID = "YOUR_GUMROAD_PRODUCT_ID"
-    static let purchaseURL = URL(string: "https://gumroad.com")! // TODO: your product page
+    static let gumroadProductID = "feMqfzhFkJO4HvlTTOeYcw=="
+    static let purchaseURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let appVersion = "1.0.0"
     static let refreshInterval: TimeInterval = 24 * 60 * 60
 }

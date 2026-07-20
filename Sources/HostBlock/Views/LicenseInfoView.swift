@@ -42,13 +42,6 @@ struct LicenseInfoView: View {
                 row("Card", cardText(license))
                 row("Order #", license.orderNumber.map(String.init) ?? "—")
             }
-
-            Divider()
-
-            Text("This license belongs to the person shown above. Anyone this key is shared with can see these purchase details.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .frame(width: 420)

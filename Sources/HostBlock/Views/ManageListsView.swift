@@ -42,8 +42,7 @@ struct ManageListsView: View {
                 Text("No custom lists yet.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 24)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
                 ScrollView {
                     VStack(spacing: 6) {
@@ -51,12 +50,15 @@ struct ManageListsView: View {
                             listRow(list)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxHeight: 220)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .padding(20)
-        .frame(width: 480)
+        // Fixed content size: the window is sized from this view's fitting size at
+        // creation, and a ScrollView's ideal height collapses to zero without it.
+        .frame(width: 480, height: 380)
     }
 
     private func listRow(_ list: BlocklistSource) -> some View {

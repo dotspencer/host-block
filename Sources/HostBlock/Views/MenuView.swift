@@ -65,6 +65,11 @@ struct MenuView: View {
                     Text(statusText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if let updatedText {
+                        Text(updatedText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
                 Toggle("Blocking", isOn: protectionBinding)
@@ -83,11 +88,12 @@ struct MenuView: View {
         if !state.helperInstalled { return "Setup required" }
         if !state.protectionEnabled { return "Blocking is off" }
         let count = Self.countFormatter.string(from: NSNumber(value: state.blockedCount)) ?? "\(state.blockedCount)"
-        if let updated = state.lastUpdated {
-            let ago = Self.relativeFormatter.localizedString(for: updated, relativeTo: Date())
-            return "Blocking \(count) domains · updated \(ago)"
-        }
         return "Blocking \(count) domains"
+    }
+
+    private var updatedText: String? {
+        guard state.helperInstalled, state.protectionEnabled, let updated = state.lastUpdated else { return nil }
+        return "Updated \(Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))"
     }
 
     private var listsSection: some View {
