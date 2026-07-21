@@ -2,28 +2,46 @@ import Foundation
 
 // MARK: - License
 
-public enum LicenseTier: String, Codable, Sendable {
+public enum LicenseTier: String, Sendable {
     case personal
-    case family
+    case pro
 
     public var displayName: String {
         switch self {
         case .personal: return "Personal"
-        case .family: return "Family"
+        case .pro: return "Pro"
         }
     }
 
-    public var deviceLimitDescription: String {
+    public var deviceLimit: String {
         switch self {
         case .personal: return "1 device"
-        case .family: return "Unlimited devices"
+        case .pro: return "Unlimited devices"
         }
     }
 
-    /// Gumroad reports the purchased variant as a string like "(Family)". A single
-    /// product with a "Family" variant maps to the family tier; everything else is personal.
+    /// Gumroad reports the purchased variant as a string like "(Pro)". Any variant
+    /// naming the paid tier maps to `.pro`; everything else is Personal. "Family" is
+    /// accepted as a legacy alias so licenses sold under the old name still validate.
     public static func detect(variants: String?) -> LicenseTier {
-        (variants ?? "").lowercased().contains("family") ? .family : .personal
+        let value = (variants ?? "").lowercased()
+        return (value.contains("pro") || value.contains("family")) ? .pro : .personal
+    }
+}
+
+/// Decoded leniently so licenses saved under the old "family" tier still load as Pro.
+extension LicenseTier: Codable {
+    public init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self).lowercased()
+        switch raw {
+        case "pro", "family": self = .pro
+        default: self = .personal
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
     }
 }
 
@@ -37,6 +55,7 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
     public var cardVisual: String?
     public var cardType: String?
     public var orderNumber: Int?
+    public var deviceCount: Int
 
     public init(
         licenseKey: String,
@@ -47,7 +66,8 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
         purchaseDate: Date? = nil,
         cardVisual: String? = nil,
         cardType: String? = nil,
-        orderNumber: Int? = nil
+        orderNumber: Int? = nil,
+        deviceCount: Int = 1
     ) {
         self.licenseKey = licenseKey
         self.email = email
@@ -58,49 +78,103 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
         self.cardVisual = cardVisual
         self.cardType = cardType
         self.orderNumber = orderNumber
+        self.deviceCount = deviceCount
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        licenseKey = try c.decode(String.self, forKey: .licenseKey)
+        email = try c.decode(String.self, forKey: .email)
+        fullName = try c.decodeIfPresent(String.self, forKey: .fullName)
+        tier = try c.decode(LicenseTier.self, forKey: .tier)
+        productName = try c.decodeIfPresent(String.self, forKey: .productName)
+        purchaseDate = try c.decodeIfPresent(Date.self, forKey: .purchaseDate)
+        cardVisual = try c.decodeIfPresent(String.self, forKey: .cardVisual)
+        cardType = try c.decodeIfPresent(String.self, forKey: .cardType)
+        orderNumber = try c.decodeIfPresent(Int.self, forKey: .orderNumber)
+        deviceCount = try c.decodeIfPresent(Int.self, forKey: .deviceCount) ?? 1
     }
 }
 
-// MARK: - Blocklists
+// MARK: - Categories
+
+public enum ListCategory: String, Codable, Sendable, CaseIterable {
+    case ads
+    case trackers
+    case malware
+    case privacy
+    case adult
+    case custom
+
+    public var label: String { rawValue.uppercased() }
+
+    /// The categories offered as filters in the Browse catalog (custom lists never
+    /// appear there — they come from user-supplied URLs).
+    public static var browsable: [ListCategory] { [.ads, .trackers, .malware, .privacy, .adult] }
+}
+
+// MARK: - Installed blocklists
 
 public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
     public var detail: String?
     public var url: String
-    public var isBuiltIn: Bool
+    public var category: ListCategory
     public var enabled: Bool
+    /// Domains found in this list on its last successful fetch (advertised estimate until then).
+    public var domainCount: Int
+    public var lastFetched: Date?
 
-    public init(id: String, name: String, detail: String? = nil, url: String, isBuiltIn: Bool, enabled: Bool) {
+    public var isCustom: Bool { category == .custom }
+
+    public init(
+        id: String,
+        name: String,
+        detail: String? = nil,
+        url: String,
+        category: ListCategory,
+        enabled: Bool,
+        domainCount: Int = 0,
+        lastFetched: Date? = nil
+    ) {
         self.id = id
         self.name = name
         self.detail = detail
         self.url = url
-        self.isBuiltIn = isBuiltIn
+        self.category = category
         self.enabled = enabled
+        self.domainCount = domainCount
+        self.lastFetched = lastFetched
+    }
+
+    /// Lenient decoding so configs written before categories/counts existed still load.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        detail = try c.decodeIfPresent(String.self, forKey: .detail)
+        url = try c.decode(String.self, forKey: .url)
+        category = try c.decodeIfPresent(ListCategory.self, forKey: .category) ?? .custom
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
+        lastFetched = try c.decodeIfPresent(Date.self, forKey: .lastFetched)
+    }
+
+    public static func custom(id: String = UUID().uuidString, name: String, url: String, host: String?) -> BlocklistSource {
+        BlocklistSource(id: id, name: name, detail: host, url: url, category: .custom, enabled: true)
     }
 }
 
-public enum BuiltinLists {
-    public static let oisd = BlocklistSource(
-        id: "oisd-big",
-        name: "oisd · Ads, Malware, Tracking",
-        detail: "big.oisd.nl",
-        url: "https://big.oisd.nl/domainswild2",
-        isBuiltIn: true,
-        enabled: true
-    )
-
-    public static let oisdNSFW = BlocklistSource(
-        id: "oisd-nsfw",
-        name: "oisd · NSFW",
-        detail: "nsfw.oisd.nl",
-        url: "https://nsfw.oisd.nl/domainswild2",
-        isBuiltIn: true,
-        enabled: false
-    )
-
-    public static var all: [BlocklistSource] { [oisd, oisdNSFW] }
+public enum DefaultLists {
+    /// Seeded on a fresh install so the app isn't empty. Matches the Browse catalog's
+    /// stable ids so those entries read as "Added". Counts are advertised estimates
+    /// that get replaced by real values after the first fetch.
+    public static var seed: [BlocklistSource] {
+        Catalog.bundled
+            .filter { ["adguard-dns", "stevenblack-unified", "malware-domains", "oisd-small"].contains($0.id) }
+            .map { $0.asSource(enabled: true) }
+    }
 }
 
 // MARK: - App configuration
@@ -112,7 +186,7 @@ public struct AppConfig: Codable, Sendable {
     public var blockedCount: Int
 
     public init(
-        sources: [BlocklistSource] = BuiltinLists.all,
+        sources: [BlocklistSource] = DefaultLists.seed,
         protectionEnabled: Bool = true,
         lastUpdated: Date? = nil,
         blockedCount: Int = 0

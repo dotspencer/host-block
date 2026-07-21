@@ -95,10 +95,57 @@ final class DomainParserTests: XCTestCase {
 
 final class LicenseTierTests: XCTestCase {
     func testTierDetection() {
-        XCTAssertEqual(LicenseTier.detect(variants: "(Family)"), .family)
-        XCTAssertEqual(LicenseTier.detect(variants: "Family License"), .family)
+        XCTAssertEqual(LicenseTier.detect(variants: "(Pro)"), .pro)
+        XCTAssertEqual(LicenseTier.detect(variants: "Pro License"), .pro)
+        // "Family" is accepted as a legacy alias for the paid tier.
+        XCTAssertEqual(LicenseTier.detect(variants: "(Family)"), .pro)
         XCTAssertEqual(LicenseTier.detect(variants: "(Personal)"), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: nil), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: ""), .personal)
+    }
+
+    func testTierDecodesLegacyFamily() throws {
+        let decoder = JSONDecoder()
+        XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"family\"".utf8)), .pro)
+        XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"pro\"".utf8)), .pro)
+        XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"personal\"".utf8)), .personal)
+    }
+}
+
+final class ModelDecodingTests: XCTestCase {
+    /// A config written by the pre-redesign app (isBuiltIn, no category/counts) must
+    /// still decode, defaulting missing fields rather than throwing.
+    func testLegacyBlocklistSourceDecodes() throws {
+        let json = """
+        {"id":"oisd-big","name":"oisd","detail":"big.oisd.nl",
+         "url":"https://big.oisd.nl/domainswild2","isBuiltIn":true,"enabled":true}
+        """
+        let source = try JSONDecoder().decode(BlocklistSource.self, from: Data(json.utf8))
+        XCTAssertEqual(source.id, "oisd-big")
+        XCTAssertEqual(source.category, .custom)
+        XCTAssertEqual(source.domainCount, 0)
+        XCTAssertNil(source.lastFetched)
+        XCTAssertTrue(source.enabled)
+    }
+
+    func testCatalogEntryDecodesAndConvertsToSource() throws {
+        let json = """
+        [{"id":"easylist","name":"EasyList","description":"Ads.",
+          "url":"https://easylist.to/easylist/easylist.txt","category":"ads",
+          "domainCount":84000,"featured":true}]
+        """
+        let entries = try JSONDecoder().decode([CatalogEntry].self, from: Data(json.utf8))
+        XCTAssertEqual(entries.count, 1)
+        let source = entries[0].asSource(enabled: true)
+        XCTAssertEqual(source.category, .ads)
+        XCTAssertEqual(source.domainCount, 84000)
+        XCTAssertEqual(source.detail, "easylist.to")
+    }
+
+    func testBundledCatalogCoversSeedIDs() {
+        let catalogIDs = Set(Catalog.bundled.map(\.id))
+        for source in DefaultLists.seed {
+            XCTAssertTrue(catalogIDs.contains(source.id), "seed \(source.id) missing from catalog")
+        }
     }
 }

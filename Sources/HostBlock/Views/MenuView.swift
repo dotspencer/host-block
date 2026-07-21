@@ -5,214 +5,138 @@ import SwiftUI
 struct MenuView: View {
     @ObservedObject private var state = AppState.shared
 
+    private var isActive: Bool {
+        state.license != nil && state.protectionEnabled && state.helperInstalled
+    }
+
     var body: some View {
-        Group {
-            if state.license == nil {
-                unlicensedBody
-            } else {
-                licensedBody
-            }
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(Theme.separator)
+            tabBar
+            Divider().overlay(Theme.separator)
+            tabContent
+            Divider().overlay(Theme.separator)
+            footer
         }
-        .frame(width: 320)
+        .frame(width: Theme.panelWidth)
+        .background(Theme.background)
+        .environment(\.colorScheme, .dark)
     }
 
-    // MARK: Unlicensed
-
-    private var unlicensedBody: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "shield.slash")
-                .font(.system(size: 28))
-                .foregroundStyle(.secondary)
-            Text("HostBlock isn't activated")
-                .font(.headline)
-            Text("Enter your license key to start blocking.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button("Activate License…") { WindowManager.shared.showActivation() }
-                .keyboardShortcut(.defaultAction)
-            Divider()
-            HStack {
-                Spacer()
-                Button("Quit HostBlock") { NSApp.terminate(nil) }
-                    .controlSize(.small)
-            }
-        }
-        .padding(12)
-    }
-
-    // MARK: Licensed
-
-    private var licensedBody: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header.padding(12)
-            Divider()
-            listsSection.padding(12)
-            Divider()
-            actionsSection.padding(12)
-            Divider()
-            footer.padding(12)
-        }
-    }
+    // MARK: Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: state.protectionEnabled && state.helperInstalled ? "shield.fill" : "shield.slash")
-                    .font(.system(size: 24))
-                    .foregroundStyle(state.protectionEnabled && state.helperInstalled ? Color.green : Color.secondary)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("HostBlock").font(.headline)
-                    Text(statusText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if let updatedText {
-                        Text(updatedText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isActive ? Theme.accent.opacity(0.18) : Theme.surfaceElevated)
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Image(systemName: isActive ? "shield.fill" : "shield.slash")
+                        .font(.system(size: 20))
+                        .foregroundStyle(isActive ? Theme.accent : Theme.textSecondary)
+                )
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 8) {
+                    Text("HostBlock")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+                    if state.license != nil {
+                        StatusBadge(
+                            text: state.protectionEnabled ? "ACTIVE" : "PAUSED",
+                            color: state.protectionEnabled ? Theme.accent : Theme.textSecondary
+                        )
                     }
                 }
-                Spacer()
-                Toggle("Blocking", isOn: protectionBinding)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .disabled(!state.helperInstalled)
+                Text(subline)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(Theme.textSecondary)
             }
-            if !state.helperInstalled {
-                Button("Finish Setup…") { state.finishSetup() }
-                    .controlSize(.small)
-            }
-        }
-    }
 
-    private var statusText: String {
-        if !state.helperInstalled { return "Setup required" }
-        if !state.protectionEnabled { return "Blocking is off" }
-        let count = Self.countFormatter.string(from: NSNumber(value: state.blockedCount)) ?? "\(state.blockedCount)"
-        return "Blocking \(count) domains"
-    }
-
-    private var updatedText: String? {
-        guard state.helperInstalled, state.protectionEnabled, let updated = state.lastUpdated else { return nil }
-        return "Updated \(Self.relativeFormatter.localizedString(for: updated, relativeTo: Date()))"
-    }
-
-    private var listsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Blocklists")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            ForEach(state.sources) { source in
-                sourceRow(source)
-            }
-            Button("Manage Custom Lists…") { WindowManager.shared.showManageLists() }
-                .buttonStyle(.link)
-                .font(.caption)
-        }
-    }
-
-    private func sourceRow(_ source: BlocklistSource) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(source.name).font(.callout)
-                if let detail = source.detail {
-                    Text(detail).font(.caption2).foregroundStyle(.secondary)
-                }
-            }
             Spacer()
-            Toggle(source.name, isOn: sourceBinding(source))
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.small)
+
+            Toggle("", isOn: Binding(
+                get: { AppState.shared.protectionEnabled },
+                set: { AppState.shared.setProtection($0) }
+            ))
+            .labelsHidden()
+            .toggleStyle(GreenToggleStyle())
+            .disabled(state.license == nil)
+            .opacity(state.license == nil ? 0.4 : 1)
         }
+        .padding(16)
     }
 
-    private var actionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Button {
-                    state.updateNow()
-                } label: {
-                    Label("Update Now", systemImage: "arrow.clockwise")
-                }
-                .disabled(!state.helperInstalled || !state.protectionEnabled || state.isWorking)
+    private var subline: String {
+        guard state.license != nil else { return "Not activated" }
+        if !state.protectionEnabled || !state.helperInstalled { return "Blocking disabled" }
+        return "\(Theme.abbreviate(state.blockedCount)) domains blocked"
+    }
 
-                Button {
-                    state.flushDNS()
-                } label: {
-                    Label("Flush DNS", systemImage: "wind")
-                }
-                .disabled(!state.helperInstalled || state.isWorking)
+    // MARK: Tab bar
 
-                Spacer()
-                if state.isWorking {
-                    ProgressView().controlSize(.small)
-                }
-            }
-            if let error = state.lastError {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .lineLimit(4)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                tabButton(tab)
             }
         }
     }
+
+    private func tabButton(_ tab: Tab) -> some View {
+        let locked = tab.requiresLicense && state.license == nil
+        let selected = state.selectedTab == tab
+        return Button {
+            if !locked { state.selectedTab = tab }
+        } label: {
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: locked ? "lock.fill" : tab.icon)
+                        .font(.system(size: 12, weight: .medium))
+                    Text(tab.title)
+                        .font(.system(size: 13, weight: selected ? .semibold : .regular))
+                }
+                .foregroundStyle(selected ? Theme.textPrimary : (locked ? Theme.textTertiary : Theme.textSecondary))
+                Rectangle()
+                    .fill(selected ? Theme.accent : .clear)
+                    .frame(height: 2)
+            }
+            .padding(.top, 12)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .disabled(locked)
+    }
+
+    // MARK: Content
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch state.selectedTab {
+        case .lists: ListsTabView()
+        case .browse: BrowseTabView()
+        case .license: LicenseTabView()
+        }
+    }
+
+    // MARK: Footer
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Licensed to")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(state.license?.email ?? "")
-                        .font(.caption)
-                }
-                Spacer()
-                Button("License Info…") { WindowManager.shared.showLicenseInfo() }
-                    .controlSize(.small)
-            }
-            Toggle("Launch at login", isOn: launchAtLoginBinding)
-                .font(.caption)
-            HStack {
-                Text("v\(AppConstants.appVersion)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                Button("Quit") { NSApp.terminate(nil) }
-                    .controlSize(.small)
-            }
+        HStack {
+            Text("v\(AppConstants.appVersion)")
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(Theme.textTertiary)
+            Spacer()
+            Button("Preferences") { WindowManager.shared.showPreferences() }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.textSecondary)
+            Text("·").foregroundStyle(Theme.textTertiary)
+            Button("Quit") { NSApp.terminate(nil) }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.textSecondary)
         }
+        .font(.system(size: 13))
+        .padding(16)
     }
-
-    // MARK: Bindings & formatters
-
-    private var protectionBinding: Binding<Bool> {
-        Binding(
-            get: { AppState.shared.protectionEnabled },
-            set: { AppState.shared.setProtection($0) }
-        )
-    }
-
-    private var launchAtLoginBinding: Binding<Bool> {
-        Binding(
-            get: { AppState.shared.launchAtLogin },
-            set: { AppState.shared.setLaunchAtLogin($0) }
-        )
-    }
-
-    private func sourceBinding(_ source: BlocklistSource) -> Binding<Bool> {
-        Binding(
-            get: { AppState.shared.source(withID: source.id)?.enabled ?? false },
-            set: { AppState.shared.setSource(id: source.id, enabled: $0) }
-        )
-    }
-
-    private static let countFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return formatter
-    }()
-
-    private static let relativeFormatter = RelativeDateTimeFormatter()
 }

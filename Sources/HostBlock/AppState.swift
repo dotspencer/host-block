@@ -7,8 +7,36 @@ import SwiftUI
 enum AppConstants {
     static let gumroadProductID = "feMqfzhFkJO4HvlTTOeYcw=="
     static let purchaseURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
-    static let appVersion = "1.0.0"
+    static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
+    static let freeLicenseURL = URL(string: "https://hostblock.app")!
+    static let catalogURL = "https://hostblock.app/catalog.json"
+    static let appVersion = "1.2.4"
     static let refreshInterval: TimeInterval = 24 * 60 * 60
+}
+
+enum Tab: String, CaseIterable {
+    case lists
+    case browse
+    case license
+
+    var title: String {
+        switch self {
+        case .lists: return "Lists"
+        case .browse: return "Browse"
+        case .license: return "License"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .lists: return "list.bullet"
+        case .browse: return "magnifyingglass"
+        case .license: return "key"
+        }
+    }
+
+    /// Lists and Browse require an active license; License is always reachable.
+    var requiresLicense: Bool { self != .license }
 }
 
 @MainActor
@@ -16,7 +44,8 @@ final class AppState: ObservableObject {
     static let shared = AppState()
 
     @Published private(set) var license: LicenseInfo?
-    @Published private(set) var sources: [BlocklistSource] = BuiltinLists.all
+    @Published private(set) var sources: [BlocklistSource] = DefaultLists.seed
+    @Published private(set) var catalog: [CatalogEntry] = Catalog.bundled
     @Published private(set) var protectionEnabled = true
     @Published private(set) var helperInstalled = false
     @Published private(set) var isWorking = false
@@ -26,13 +55,29 @@ final class AppState: ObservableObject {
     @Published private(set) var launchAtLogin = false
     @Published private(set) var isActivating = false
     @Published var activationError: String?
+    @Published var selectedTab: Tab = .lists
 
-    private let store = ConfigStore()
+    private let store: ConfigStore
     private let fetcher = BlocklistFetcher()
     private let helper = PrivilegedHelper()
+    private let catalogFetcher = CatalogFetcher(urlString: AppConstants.catalogURL)
     private let gumroad = GumroadClient(productID: AppConstants.gumroadProductID)
     private var refreshTimer: Timer?
     private var bootstrapped = false
+
+    /// Demo mode (HOSTBLOCK_DEMO=1) renders the UI from seeded data without any network
+    /// or privileged side effects — used to screenshot the design against the mockups.
+    private let demoMode = ProcessInfo.processInfo.environment["HOSTBLOCK_DEMO"] == "1"
+
+    private init() {
+        // A support-dir override lets a throwaway data set be used for screenshots and
+        // manual testing without disturbing the real ~/Library/Application Support/HostBlock.
+        if let override = ProcessInfo.processInfo.environment["HOSTBLOCK_SUPPORT_DIR"] {
+            store = ConfigStore(baseDir: URL(fileURLWithPath: override, isDirectory: true))
+        } else {
+            store = ConfigStore()
+        }
+    }
 
     // MARK: Startup
 
@@ -41,40 +86,46 @@ final class AppState: ObservableObject {
         bootstrapped = true
 
         if let config = store.loadConfig() {
-            sources = Self.mergeBuiltins(into: config.sources)
+            sources = Self.migrateCategories(config.sources)
             protectionEnabled = config.protectionEnabled
             lastUpdated = config.lastUpdated
             blockedCount = config.blockedCount
         }
         license = store.loadLicense()
-        helperInstalled = helper.isInstalled
+        helperInstalled = demoMode ? true : helper.isInstalled
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        selectedTab = license == nil ? .license : .lists
+        catalog = store.loadCatalog() ?? Catalog.bundled
 
-        if license == nil {
-            WindowManager.shared.showActivation()
-        } else {
+        // Demo mode stops here: no Gumroad checks, list downloads, hosts writes, or timers.
+        guard !demoMode else {
+            if let tab = ProcessInfo.processInfo.environment["HOSTBLOCK_TAB"].flatMap(Tab.init) {
+                selectedTab = tab
+            }
+            return
+        }
+
+        Task { await refreshCatalog() }
+        if license != nil {
             Task { await self.revalidateLicense() }
             refreshIfStale()
         }
-
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
             Task { @MainActor in AppState.shared.refreshIfStale() }
         }
     }
 
-    /// Built-ins always exist and track the app's current names/URLs; only the
-    /// user's enabled/disabled choice is preserved across launches.
-    private static func mergeBuiltins(into saved: [BlocklistSource]) -> [BlocklistSource] {
-        var result: [BlocklistSource] = []
-        for builtin in BuiltinLists.all {
-            var source = builtin
-            if let existing = saved.first(where: { $0.id == builtin.id }) {
-                source.enabled = existing.enabled
-            }
-            result.append(source)
+    /// Configs written before categories existed decode every list as `.custom`.
+    /// Recover the real category for any such list whose URL is in the catalog, so
+    /// upgraders don't see everything badged CUSTOM.
+    private static func migrateCategories(_ sources: [BlocklistSource]) -> [BlocklistSource] {
+        let byURL = Dictionary(Catalog.bundled.map { ($0.url, $0.category) }, uniquingKeysWith: { first, _ in first })
+        return sources.map { source in
+            guard source.category == .custom, let category = byURL[source.url] else { return source }
+            var updated = source
+            updated.category = category
+            return updated
         }
-        result.append(contentsOf: saved.filter { !$0.isBuiltIn })
-        return result
     }
 
     private func saveConfig() {
@@ -84,6 +135,30 @@ final class AppState: ObservableObject {
             lastUpdated: lastUpdated,
             blockedCount: blockedCount
         ))
+    }
+
+    // MARK: Catalog
+
+    private func refreshCatalog() async {
+        do {
+            let entries = try await catalogFetcher.fetch()
+            guard !entries.isEmpty else { return }
+            catalog = entries
+            store.saveCatalog(entries)
+        } catch {
+            // Keep the cached/bundled catalog when the remote one is unreachable.
+        }
+    }
+
+    func isInstalled(catalogID: String) -> Bool {
+        sources.contains { $0.id == catalogID }
+    }
+
+    func addFromCatalog(_ entry: CatalogEntry) {
+        guard !isInstalled(catalogID: entry.id) else { return }
+        sources.append(entry.asSource(enabled: true))
+        saveConfig()
+        applyIfActive()
     }
 
     // MARK: License
@@ -103,9 +178,11 @@ final class AppState: ObservableObject {
                 if result.info.tier == .personal, result.uses > 1 {
                     throw GumroadError.deviceLimitReached
                 }
-                license = result.info
-                store.saveLicense(result.info)
-                WindowManager.shared.close(.activation)
+                var info = result.info
+                info.deviceCount = result.uses
+                license = info
+                store.saveLicense(info)
+                selectedTab = .lists
                 await runInitialSetup()
             } catch let error as GumroadError {
                 activationError = error.errorDescription
@@ -122,8 +199,10 @@ final class AppState: ObservableObject {
         guard let current = license else { return }
         do {
             let result = try await gumroad.verify(licenseKey: current.licenseKey, incrementUses: false)
-            license = result.info
-            store.saveLicense(result.info)
+            var info = result.info
+            info.deviceCount = result.uses
+            license = info
+            store.saveLicense(info)
         } catch let error as GumroadError {
             switch error {
             case .invalidKey, .refunded:
@@ -139,7 +218,15 @@ final class AppState: ObservableObject {
     func deactivate() {
         license = nil
         store.deleteLicense()
-        WindowManager.shared.showActivation()
+        selectedTab = .license
+    }
+
+    var deviceUsage: String {
+        guard let license else { return "—" }
+        switch license.tier {
+        case .personal: return "\(license.deviceCount) / 1"
+        case .pro: return "\(license.deviceCount) · unlimited"
+        }
     }
 
     // MARK: Setup
@@ -172,16 +259,21 @@ final class AppState: ObservableObject {
         guard let index = sources.firstIndex(where: { $0.id == id }) else { return }
         sources[index].enabled = enabled
         saveConfig()
-        if protectionEnabled, helperInstalled {
-            Task { await applyBlocklists(forceRefresh: false) }
-        }
+        applyIfActive()
     }
 
     func setProtection(_ enabled: Bool) {
-        guard helperInstalled else {
-            lastError = HelperError.notAuthorized.errorDescription
+        guard license != nil else { return }
+        if demoMode { protectionEnabled = enabled; return }
+        // Turning protection on for the first time installs the privileged helper
+        // (the single admin prompt), then enables and applies.
+        if enabled, !helperInstalled {
+            protectionEnabled = true
+            saveConfig()
+            Task { await runInitialSetup() }
             return
         }
+        guard helperInstalled else { return }
         protectionEnabled = enabled
         saveConfig()
         Task {
@@ -205,6 +297,7 @@ final class AppState: ObservableObject {
     }
 
     func flushDNS() {
+        guard !demoMode else { return }
         Task {
             isWorking = true
             do {
@@ -232,29 +325,22 @@ final class AppState: ObservableObject {
             return "That list is already added."
         }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        sources.append(BlocklistSource(
-            id: UUID().uuidString,
+        sources.append(BlocklistSource.custom(
             name: trimmedName.isEmpty ? (url.host ?? "Custom list") : trimmedName,
-            detail: url.host,
             url: trimmedURL,
-            isBuiltIn: false,
-            enabled: true
+            host: url.host
         ))
         saveConfig()
-        if protectionEnabled, helperInstalled {
-            Task { await applyBlocklists(forceRefresh: false) }
-        }
+        applyIfActive()
         return nil
     }
 
-    func removeCustomList(id: String) {
-        guard let index = sources.firstIndex(where: { $0.id == id && !$0.isBuiltIn }) else { return }
-        store.deleteCache(sourceID: sources[index].id)
+    func removeSource(id: String) {
+        guard let index = sources.firstIndex(where: { $0.id == id }) else { return }
+        store.deleteCache(sourceID: id)
         sources.remove(at: index)
         saveConfig()
-        if protectionEnabled, helperInstalled {
-            Task { await applyBlocklists(forceRefresh: false) }
-        }
+        applyIfActive()
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -273,6 +359,12 @@ final class AppState: ObservableObject {
 
     // MARK: Hosts-file pipeline
 
+    private func applyIfActive() {
+        if protectionEnabled, helperInstalled {
+            Task { await applyBlocklists(forceRefresh: false) }
+        }
+    }
+
     private func refreshIfStale() {
         guard license != nil, helperInstalled, protectionEnabled, !isWorking else { return }
         let stale = lastUpdated.map { Date().timeIntervalSince($0) > AppConstants.refreshInterval } ?? true
@@ -282,6 +374,7 @@ final class AppState: ObservableObject {
     }
 
     private func applyBlocklists(forceRefresh: Bool) async {
+        guard !demoMode else { return }
         guard license != nil, helperInstalled else { return }
         guard !isWorking else { return }
         isWorking = true
@@ -290,11 +383,22 @@ final class AppState: ObservableObject {
 
         var allDomains = Set<String>()
         var sourceErrors: [String] = []
+        var counts: [String: Int] = [:]
         for source in sources where source.enabled {
             do {
-                allDomains.formUnion(try await loadDomains(for: source, forceRefresh: forceRefresh))
+                let domains = try await loadDomains(for: source, forceRefresh: forceRefresh)
+                allDomains.formUnion(domains)
+                counts[source.id] = domains.count
             } catch {
                 sourceErrors.append("\(source.name): \(error.localizedDescription)")
+            }
+        }
+
+        let now = Date()
+        for (id, count) in counts {
+            if let index = sources.firstIndex(where: { $0.id == id }) {
+                sources[index].domainCount = count
+                sources[index].lastFetched = now
             }
         }
 
@@ -304,7 +408,7 @@ final class AppState: ObservableObject {
                 .write(to: store.stagingFileURL, atomically: true, encoding: .utf8)
             try await helper.apply(stagingFile: store.stagingFileURL)
             blockedCount = sorted.count
-            lastUpdated = Date()
+            lastUpdated = now
             saveConfig()
         } catch {
             lastError = error.localizedDescription
