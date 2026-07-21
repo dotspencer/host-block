@@ -5,17 +5,17 @@ struct PreferencesView: View {
     @ObservedObject private var state = AppState.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: s(16)) {
             Text("Preferences")
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: s(17), weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
 
             // GreenToggleStyle renders only the pill, so the label goes beside it here.
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .center, spacing: s(12)) {
+                VStack(alignment: .leading, spacing: s(2)) {
                     Text("Launch at login").foregroundStyle(Theme.textPrimary)
                     Text("Start HostBlock automatically when you sign in.")
-                        .font(.system(size: 12))
+                        .font(.system(size: s(12)))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
@@ -29,16 +29,16 @@ struct PreferencesView: View {
 
             Divider().overlay(Theme.separator)
 
-            HStack(spacing: 10) {
+            HStack(spacing: s(10)) {
                 Image(systemName: state.helperInstalled ? "checkmark.shield.fill" : "exclamationmark.shield")
                     .foregroundStyle(state.helperInstalled ? Theme.accent : Theme.color(for: .ads))
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: s(2)) {
                     Text(state.helperInstalled ? "Helper installed" : "Setup required")
                         .foregroundStyle(Theme.textPrimary)
                     Text(state.helperInstalled
                          ? "HostBlock can update the hosts file without prompting."
                          : "Grant admin access once to enable blocking.")
-                        .font(.system(size: 12))
+                        .font(.system(size: s(12)))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
@@ -58,8 +58,8 @@ struct PreferencesView: View {
 
             Spacer()
         }
-        .padding(20)
-        .frame(width: 380, height: 300)
+        .padding(s(20))
+        .frame(width: s(380), height: s(300))
         .background(Theme.background)
         .environment(\.colorScheme, .dark)
     }
