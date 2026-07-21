@@ -143,7 +143,6 @@ final class AppState: ObservableObject {
 
         Task { await refreshCatalog() }
         if license != nil {
-            Task { await self.revalidateLicense() }
             refreshIfStale()
         }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
@@ -235,27 +234,10 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Silent launch-time re-check: refreshes purchase details and drops the
-    /// license if it was refunded or revoked. Network failures are ignored.
-    private func revalidateLicense() async {
-        guard let current = license else { return }
-        do {
-            let result = try await gumroad.verify(licenseKey: current.licenseKey, incrementUses: false)
-            var info = result.info
-            info.deviceCount = result.uses
-            license = info
-            store.saveLicense(info)
-        } catch let error as GumroadError {
-            switch error {
-            case .invalidKey, .refunded:
-                clearLicenseLocally()
-            case .notConfigured, .badResponse, .deviceLimitReached:
-                break
-            }
-        } catch {
-            // offline — keep the stored license
-        }
-    }
+    // Note: there is no launch-time re-validation. Refunds/chargebacks are caught at
+    // activation time (verify throws .refunded), which blocks new activations on a
+    // refunded key. Already-activated devices keep working — an intentional trade to
+    // avoid a launch network dependency and spurious license loss on transient errors.
 
     /// User-initiated removal. Frees the device's uses slot on the license server
     /// FIRST, and only removes the license locally if that succeeds — so a failed
