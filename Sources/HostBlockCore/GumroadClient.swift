@@ -60,7 +60,9 @@ public struct GumroadClient: Sendable {
             .joined(separator: "&")
             .data(using: .utf8)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let session = Self.freshSession()
+        defer { session.finishTasksAndInvalidate() }
+        let (data, _) = try await session.data(for: request)
         guard let response = try? JSONDecoder().decode(VerifyResponse.self, from: data) else {
             throw GumroadError.badResponse
         }
@@ -101,7 +103,9 @@ public struct GumroadClient: Sendable {
         request.timeoutInterval = 30
         request.httpBody = try JSONEncoder().encode(["license_key": licenseKey])
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let session = Self.freshSession()
+        defer { session.finishTasksAndInvalidate() }
+        let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw GumroadError.badResponse
         }
@@ -116,6 +120,19 @@ public struct GumroadClient: Sendable {
     /// Whether a real Worker URL has been configured (not empty, not the placeholder).
     public var isDecrementConfigured: Bool {
         !decrementEndpoint.isEmpty && !decrementEndpoint.contains("example")
+    }
+
+    /// A fresh, non-shared session per license call. These calls are rare (activate,
+    /// revalidate, decrement), so the cost is negligible — and a new session guarantees
+    /// we never inherit a poisoned connection or Happy-Eyeballs decision from
+    /// `URLSession.shared`. Such stale state (formed when a host is first reached during
+    /// flaky DNS) otherwise caused decrement requests to time out for the whole life of
+    /// the app process, even after DNS recovered.
+    static func freshSession() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 30
+        config.waitsForConnectivity = false
+        return URLSession(configuration: config)
     }
 
     static func formEncode(_ value: String) -> String {
