@@ -1,11 +1,38 @@
 import AppKit
 import Foundation
 import HostBlockCore
+import os
 import ServiceManagement
 import SwiftUI
 
+/// Unified-log channel for license operations. View with Console.app (filter
+/// subsystem `com.hostblock.app`) or `log stream --predicate 'subsystem == "com.hostblock.app"'`.
+private let licenseLog = Logger(subsystem: "com.hostblock.app", category: "license")
+
+/// True when stderr is a terminal — i.e. the binary was launched from a shell
+/// rather than via `open`/Finder.
+private let stderrIsTerminal = isatty(STDERR_FILENO) != 0
+
+/// Logs a license event to the unified log (`.error` for failures, `.notice`
+/// otherwise) and, when run from a terminal, also mirrors it to stderr so the
+/// line is visible right there without a separate `log stream`.
+func logLicense(_ message: String, isError: Bool = false) {
+    if isError {
+        licenseLog.error("\(message, privacy: .public)")
+    } else {
+        licenseLog.notice("\(message, privacy: .public)")
+    }
+    if stderrIsTerminal {
+        FileHandle.standardError.write(Data("[HostBlock/license] \(message)\n".utf8))
+    }
+}
+
 enum AppConstants {
     static let gumroadProductID = "feMqfzhFkJO4HvlTTOeYcw=="
+    /// URL of the license-decrement Cloudflare Worker (see server/license-decrement).
+    /// Removing a license POSTs the key here so its uses slot is freed for a later
+    /// re-add. Leave the placeholder to disable — removal still works locally.
+    static let decrementEndpoint = "https://api.hostblock.app/license/decrement"
     static let purchaseURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!
@@ -59,13 +86,18 @@ final class AppState: ObservableObject {
     @Published private(set) var launchAtLogin = false
     @Published private(set) var isActivating = false
     @Published var activationError: String?
+    @Published private(set) var isDeactivating = false
+    @Published private(set) var deactivationError: String?
     @Published var selectedTab: Tab = .lists
 
     private let store: ConfigStore
     private let fetcher = BlocklistFetcher()
     private let helper = PrivilegedHelper()
     private let catalogFetcher = CatalogFetcher(urlString: AppConstants.catalogURL)
-    private let gumroad = GumroadClient(productID: AppConstants.gumroadProductID)
+    private let gumroad = GumroadClient(
+        productID: AppConstants.gumroadProductID,
+        decrementEndpoint: AppConstants.decrementEndpoint
+    )
     private var refreshTimer: Timer?
     private var bootstrapped = false
 
@@ -186,12 +218,18 @@ final class AppState: ObservableObject {
                 info.deviceCount = result.uses
                 license = info
                 store.saveLicense(info)
+                // Activating (re)enables blocking — removal turns it off, so a fresh
+                // activation must turn it back on before setup applies the lists.
+                protectionEnabled = true
                 selectedTab = .lists
+                logLicense("License activated (tier \(info.tier.rawValue), uses \(result.uses))")
                 await runInitialSetup()
             } catch let error as GumroadError {
                 activationError = error.errorDescription
+                logLicense("Activation failed: \(error.localizedDescription)", isError: true)
             } catch {
                 activationError = "Couldn't reach Gumroad: \(error.localizedDescription)"
+                logLicense("Activation failed (could not reach Gumroad): \(error.localizedDescription)", isError: true)
             }
             isActivating = false
         }
@@ -210,7 +248,7 @@ final class AppState: ObservableObject {
         } catch let error as GumroadError {
             switch error {
             case .invalidKey, .refunded:
-                deactivate()
+                clearLicenseLocally()
             case .notConfigured, .badResponse, .deviceLimitReached:
                 break
             }
@@ -219,10 +257,64 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// User-initiated removal. Frees the device's uses slot on the license server
+    /// FIRST, and only removes the license locally if that succeeds — so a failed
+    /// decrement can't strand the count (leaving the app removed but the device still
+    /// counted). On failure the license is kept and an error is surfaced to retry.
     func deactivate() {
+        guard let key = license?.licenseKey else {
+            clearLicenseLocally()
+            return
+        }
+        // Nothing to free server-side (demo mode, or endpoint not configured): the
+        // slot concept doesn't apply, so just remove locally.
+        guard !demoMode, gumroad.isDecrementConfigured else {
+            clearLicenseLocally()
+            return
+        }
+        guard !isDeactivating else { return }
+        isDeactivating = true
+        deactivationError = nil
+        Task {
+            do {
+                try await gumroad.decrementUses(licenseKey: key)
+                logLicense("Freed license uses slot on removal")
+                clearLicenseLocally()
+            } catch {
+                logLicense("Failed to free license uses slot on removal: \(error.localizedDescription)", isError: true)
+                deactivationError = "Couldn't reach the license server to release this device. Your license was kept — check your connection and try again."
+                isDeactivating = false
+            }
+        }
+    }
+
+    /// Drops the license locally without touching the server. Used on successful
+    /// deactivation, when there's no server slot to free, and when a revalidation
+    /// finds the license invalid/refunded.
+    private func clearLicenseLocally() {
         license = nil
         store.deleteLicense()
         selectedTab = .license
+        deactivationError = nil
+        isDeactivating = false
+        // Removing the license unlicenses the app, so also stop blocking: turn
+        // protection off and strip the HostBlock section from /etc/hosts, exactly
+        // like toggling blocking off from the header.
+        if protectionEnabled {
+            protectionEnabled = false
+            saveConfig()
+            if helperInstalled, !demoMode {
+                Task {
+                    isWorking = true
+                    do {
+                        try await helper.removeBlock()
+                    } catch {
+                        lastError = error.localizedDescription
+                    }
+                    isWorking = false
+                }
+            }
+        }
     }
 
     var deviceUsage: String {

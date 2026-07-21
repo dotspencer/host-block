@@ -16,7 +16,7 @@ public enum GumroadError: LocalizedError, Equatable {
         case .refunded:
             return "This license was refunded or disputed and is no longer valid."
         case .deviceLimitReached:
-            return "This Personal license is already active on another device. Upgrade to a Family license for unlimited devices."
+            return "This Personal license is already active on another device. Upgrade to a Pro license for unlimited devices."
         case .badResponse:
             return "Couldn't understand the response from Gumroad. Try again."
         }
@@ -25,9 +25,14 @@ public enum GumroadError: LocalizedError, Equatable {
 
 public struct GumroadClient: Sendable {
     public let productID: String
+    /// URL of the deploy-side Cloudflare Worker that decrements a license's uses
+    /// count. Removing a license POSTs the key here; the Worker holds the Gumroad
+    /// seller token so it never ships in the app. Empty = feature disabled.
+    public let decrementEndpoint: String
 
-    public init(productID: String) {
+    public init(productID: String, decrementEndpoint: String = "") {
         self.productID = productID
+        self.decrementEndpoint = decrementEndpoint
     }
 
     public struct VerificationResult: Sendable {
@@ -80,6 +85,39 @@ public struct GumroadClient: Sendable {
         return VerificationResult(info: info, uses: response.uses ?? 1)
     }
 
+    /// Frees the license's uses slot so removing a license lets the same key be
+    /// re-added on the same device — otherwise it would push a Personal license past
+    /// its limit of 1. POSTs to the deploy-side Worker (which holds the seller token
+    /// and verifies the key before decrementing). Best-effort: throws so callers can
+    /// log, but removal shouldn't block on it.
+    public func decrementUses(licenseKey: String) async throws {
+        guard isDecrementConfigured, let url = URL(string: decrementEndpoint) else {
+            throw GumroadError.notConfigured
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
+        request.httpBody = try JSONEncoder().encode(["license_key": licenseKey])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw GumroadError.badResponse
+        }
+        guard
+            let decoded = try? JSONDecoder().decode(SimpleResponse.self, from: data),
+            decoded.success == true
+        else {
+            throw GumroadError.badResponse
+        }
+    }
+
+    /// Whether a real Worker URL has been configured (not empty, not the placeholder).
+    public var isDecrementConfigured: Bool {
+        !decrementEndpoint.isEmpty && !decrementEndpoint.contains("example")
+    }
+
     static func formEncode(_ value: String) -> String {
         value.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? value
     }
@@ -90,6 +128,11 @@ public struct GumroadClient: Sendable {
         if let date = withFractional.date(from: string) { return date }
         let plain = ISO8601DateFormatter()
         return plain.date(from: string)
+    }
+
+    struct SimpleResponse: Decodable {
+        let success: Bool?
+        let uses: Int?
     }
 
     struct VerifyResponse: Decodable {

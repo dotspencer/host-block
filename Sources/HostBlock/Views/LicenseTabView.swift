@@ -20,6 +20,13 @@ struct LicenseTabView: View {
     private func active(_ license: LicenseInfo) -> some View {
         VStack(spacing: 12) {
             licenseCard(license)
+            if let error = state.deactivationError {
+                Text(error)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.color(for: .malware))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             if license.tier == .personal {
                 upgradeCard
             }
@@ -69,7 +76,7 @@ struct LicenseTabView: View {
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .truncationMode(.middle)
                 .textSelection(.enabled)
         }
         .padding(.horizontal, 14)
@@ -79,8 +86,12 @@ struct LicenseTabView: View {
     private var removeRow: some View {
         Button(action: { state.deactivate() }) {
             HStack(spacing: 8) {
-                Image(systemName: "trash")
-                Text("Remove license")
+                if state.isDeactivating {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "trash")
+                }
+                Text(state.isDeactivating ? "Releasing device…" : "Remove license")
                 Spacer()
             }
             .font(.system(size: 12))
@@ -90,6 +101,7 @@ struct LicenseTabView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(state.isDeactivating)
     }
 
     private func purchasedText(_ license: LicenseInfo) -> String {
@@ -222,7 +234,16 @@ private struct ActivationField: View {
                 .font(.system(size: 14, design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
+                .lineLimit(1)
                 .onSubmit { state.activate(licenseKey: key) }
+                // Keep the field single-line and clean: a pasted key often carries a
+                // trailing newline/space (e.g. copied from an email), which otherwise
+                // grows the field and scrolls the text out of view.
+                .onChange(of: key) { newValue in
+                    let cleaned = newValue.components(separatedBy: .newlines).joined()
+                        .trimmingCharacters(in: .whitespaces)
+                    if cleaned != newValue { key = cleaned }
+                }
                 .padding(12)
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.stroke))

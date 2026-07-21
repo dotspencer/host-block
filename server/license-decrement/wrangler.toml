@@ -1,0 +1,23 @@
+name = "hostblock-license-decrement"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Serve on a path of the shared API host, leaving api.hostblock.app free for other
+# endpoints later. A plain path route (unlike a custom_domain) does NOT auto-create
+# DNS: add a proxied record for `api` in the hostblock.app zone first — e.g. an AAAA
+# `api` -> 100:: with the orange cloud on — so requests reach the Worker.
+routes = [
+  { pattern = "api.hostblock.app/license/decrement", zone_name = "hostblock.app" }
+]
+
+# The only public entrypoint is the route above; don't also expose the
+# *.workers.dev URL. Flip to true temporarily if you need to test before DNS is set.
+workers_dev = false
+
+# The Gumroad product id is public (the app already sends it in the client-side
+# verify call), so it's fine to commit here.
+[vars]
+GUMROAD_PRODUCT_ID = "feMqfzhFkJO4HvlTTOeYcw=="
+
+# The access token is a SECRET — never put it here. Set it with:
+#   wrangler secret put GUMROAD_ACCESS_TOKEN
