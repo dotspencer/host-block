@@ -39,15 +39,22 @@ struct ListsTabView: View {
                         .foregroundStyle(Theme.accent)
                     Text("Update All Lists Now")
                         .foregroundStyle(Theme.textPrimary)
-                    if state.isWorking {
-                        ProgressView().controlSize(.small).padding(.leading, s(4))
-                    }
                 }
                 .font(.system(size: s(13), weight: .medium))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, s(12))
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: s(8)))
                 .overlay(RoundedRectangle(cornerRadius: s(8)).stroke(Theme.stroke))
+                // Spinner floats in an overlay so it stays out of the button's layout
+                // flow — toggling it doesn't re-lay-out the button content, which is
+                // what made MenuBarExtra re-anchor and shift the window a few pixels.
+                .overlay(alignment: .trailing) {
+                    if state.isWorking {
+                        ProgressView()
+                            .controlSize(.small)
+                            .padding(.trailing, s(12))
+                    }
+                }
             }
             .buttonStyle(.plain)
             .disabled(!state.helperInstalled || !state.protectionEnabled || state.isWorking)
