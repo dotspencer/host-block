@@ -10,7 +10,11 @@ enum AppConstants {
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!
     static let catalogURL = "https://hostblock.app/catalog.json"
-    static let appVersion = "1.2.4"
+    /// The shipped version, read from the bundle's Info.plist (CFBundleShortVersionString)
+    /// so the footer always matches what was actually built. Falls back for `swift run`.
+    static let appVersion: String = {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+    }()
     static let refreshInterval: TimeInterval = 24 * 60 * 60
 }
 

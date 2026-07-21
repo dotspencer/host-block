@@ -10,18 +10,22 @@ struct PreferencesView: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
 
-            Toggle(isOn: Binding(
-                get: { AppState.shared.launchAtLogin },
-                set: { AppState.shared.setLaunchAtLogin($0) }
-            )) {
+            // GreenToggleStyle renders only the pill, so the label goes beside it here.
+            HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Launch at login").foregroundStyle(Theme.textPrimary)
                     Text("Start HostBlock automatically when you sign in.")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textSecondary)
                 }
+                Spacer()
+                Toggle("", isOn: Binding(
+                    get: { AppState.shared.launchAtLogin },
+                    set: { AppState.shared.setLaunchAtLogin($0) }
+                ))
+                .labelsHidden()
+                .toggleStyle(GreenToggleStyle())
             }
-            .toggleStyle(GreenToggleStyle())
 
             Divider().overlay(Theme.separator)
 

@@ -3,6 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Single source of truth for the app version. The footer reads this back from
+# Info.plist at runtime via CFBundleShortVersionString.
+VERSION="1.0.0"
+BUILD="1"
+
 swift build -c release
 
 APP="dist/HostBlock.app"

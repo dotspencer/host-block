@@ -23,73 +23,91 @@ struct LicenseTabView: View {
             if license.tier == .personal {
                 upgradeCard
             }
-            Button(action: { state.deactivate() }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "trash")
-                    Text("Remove License")
-                }
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Theme.color(for: .malware))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Theme.color(for: .malware).opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.color(for: .malware).opacity(0.3)))
-            }
-            .buttonStyle(.plain)
         }
     }
 
     private func licenseCard(_ license: LicenseInfo) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Theme.accent.opacity(0.18))
-                    .frame(width: 36, height: 36)
-                    .overlay(Image(systemName: "shield.fill").foregroundStyle(Theme.accent))
-                Text("\(license.tier.displayName) License")
-                    .font(.system(size: 15, weight: .bold))
+        VStack(spacing: 0) {
+            // Title: tier + device limit (e.g. "Personal · 1 device").
+            HStack(spacing: 6) {
+                Text(license.tier.displayName)
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
-                StatusBadge(text: "ACTIVE", color: Theme.accent)
+                Text("· \(license.tier.deviceLimit)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
                 Spacer()
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
 
-            HStack(spacing: 8) {
-                Text("Licensed to")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.textSecondary)
-                Text(license.email)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(Theme.textPrimary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
-                    .textSelection(.enabled)
-            }
-
-            HStack(spacing: 10) {
-                infoBox(title: "Plan", value: "\(license.tier.displayName) — \(license.tier.deviceLimit.lowercased())")
-                infoBox(title: "Devices", value: state.deviceUsage)
-            }
+            rowDivider
+            infoRow(label: "Email", value: license.email)
+            rowDivider
+            infoRow(label: "Purchased", value: purchasedText(license))
+            rowDivider
+            infoRow(label: "Payment", value: paymentText(license))
+            rowDivider
+            removeRow
         }
-        .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.accent.opacity(0.3)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.stroke))
     }
 
-    private func infoBox(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+    private var rowDivider: some View {
+        Rectangle().fill(Theme.separator).frame(height: 1)
+    }
+
+    private func infoRow(label: String, value: String) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textSecondary)
+            Spacer(minLength: 8)
             Text(value)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
+                .multilineTextAlignment(.trailing)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                .textSelection(.enabled)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Theme.surfaceElevated, in: RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+    }
+
+    private var removeRow: some View {
+        Button(action: { state.deactivate() }) {
+            HStack(spacing: 8) {
+                Image(systemName: "trash")
+                Text("Remove license")
+                Spacer()
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(Theme.textSecondary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func purchasedText(_ license: LicenseInfo) -> String {
+        guard let date = license.purchaseDate else { return "—" }
+        return Self.dateFormatter.string(from: date)
+    }
+
+    /// Builds "Visa •••• 4821" from Gumroad's card type + masked visual. Falls back
+    /// gracefully when either piece is missing.
+    private func paymentText(_ license: LicenseInfo) -> String {
+        let last4 = (license.cardVisual ?? "").filter(\.isNumber).suffix(4)
+        let type = license.cardType?.capitalized
+        switch (type, last4.isEmpty) {
+        case let (type?, false): return "\(type) •••• \(last4)"
+        case let (type?, true): return type
+        case (nil, false): return "•••• \(last4)"
+        default: return "—"
+        }
     }
 
     private var upgradeCard: some View {
@@ -181,6 +199,15 @@ struct LicenseTabView: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.stroke))
     }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        // Format in UTC so the shown calendar day matches Gumroad's sale date and
+        // doesn't roll back a day for viewers in timezones behind UTC.
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
+    }()
 }
 
 /// Isolated so its local text state doesn't re-render the whole License tab on each keystroke.
