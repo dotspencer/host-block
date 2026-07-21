@@ -5,12 +5,13 @@ import SwiftUI
 enum Theme {
     static let panelWidth: CGFloat = 360
 
-    // Dark surface palette (the dropdown commits to a dark look).
-    static let background = Color(red: 0.05, green: 0.06, blue: 0.08)
-    static let surface = Color(red: 0.09, green: 0.10, blue: 0.12)
-    static let surfaceElevated = Color(red: 0.13, green: 0.14, blue: 0.17)
-    static let stroke = Color.white.opacity(0.08)
-    static let separator = Color.white.opacity(0.06)
+    // Dark surface palette (the dropdown commits to a dark look). Values sampled from
+    // the reference mockups: a flat neutral charcoal panel with slightly lighter surfaces.
+    static let background = Color(red: 0.118, green: 0.118, blue: 0.129)      // #1e1e21
+    static let surface = Color(red: 0.153, green: 0.153, blue: 0.165)         // #27272a
+    static let surfaceElevated = Color(red: 0.204, green: 0.208, blue: 0.231) // #34353b
+    static let stroke = Color.white.opacity(0.09)
+    static let separator = Color.white.opacity(0.07)
 
     static let accent = Color(red: 0.29, green: 0.83, blue: 0.5)   // green
     static let info = Color(red: 0.23, green: 0.51, blue: 0.96)     // blue
