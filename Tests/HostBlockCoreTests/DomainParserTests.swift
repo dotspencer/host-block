@@ -148,4 +148,19 @@ final class ModelDecodingTests: XCTestCase {
             XCTAssertTrue(catalogIDs.contains(source.id), "seed \(source.id) missing from catalog")
         }
     }
+
+    /// Guards the JSON resource: if catalog-fallback.json is unbundled or malformed,
+    /// `Catalog.bundled` returns empty and this fails loudly rather than shipping broken.
+    func testBundledCatalogLoadsFromResource() {
+        XCTAssertEqual(Catalog.bundled.count, 8)
+        XCTAssertTrue(Catalog.bundled.contains { $0.id == "easylist" && $0.featured })
+    }
+
+    func testCatalogDecodesWrapperShape() throws {
+        let json = """
+        {"lists":[{"id":"x","name":"X","url":"https://x.example/list.txt","category":"ads","domainCount":1}]}
+        """
+        let entries = try Catalog.decode(Data(json.utf8))
+        XCTAssertEqual(entries.first?.id, "x")
+    }
 }

@@ -90,7 +90,7 @@ struct MenuView: View {
         return Button {
             if !locked { state.selectedTab = tab }
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: 0) {
                 HStack(spacing: 6) {
                     Image(systemName: locked ? "lock.fill" : tab.icon)
                         .font(.system(size: 12, weight: .medium))
@@ -98,12 +98,15 @@ struct MenuView: View {
                         .font(.system(size: 13, weight: selected ? .semibold : .regular))
                 }
                 .foregroundStyle(selected ? Theme.textPrimary : (locked ? Theme.textTertiary : Theme.textSecondary))
+                .frame(maxHeight: .infinity)
                 Rectangle()
                     .fill(selected ? Theme.accent : .clear)
                     .frame(height: 2)
             }
-            .padding(.top, 12)
-            .frame(maxWidth: .infinity)
+            // Full-width, full-height cell with a solid hit shape so a click anywhere
+            // in the tab column — including the space above and below the label — selects it.
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(locked)

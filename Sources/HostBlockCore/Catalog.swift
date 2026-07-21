@@ -54,78 +54,37 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
 }
 
 public enum Catalog {
-    /// Bundled fallback catalog: used before the remote catalog loads, and whenever
-    /// it can't be reached. The four ids referenced by `DefaultLists.seed` live here.
-    public static let bundled: [CatalogEntry] = [
-        CatalogEntry(
-            id: "adguard-dns",
-            name: "AdGuard DNS",
-            description: "Blocks ads and trackers using the AdGuard DNS filter.",
-            url: "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-            category: .ads,
-            domainCount: 48_000
-        ),
-        CatalogEntry(
-            id: "stevenblack-unified",
-            name: "StevenBlack Unified",
-            description: "Unified hosts file consolidating ad, malware, and tracker sources.",
-            url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-            category: .trackers,
-            domainCount: 123_000
-        ),
-        CatalogEntry(
-            id: "malware-domains",
-            name: "Malware Domain List",
-            description: "Known malware, phishing, and command-and-control domains.",
-            url: "https://urlhaus.abuse.ch/downloads/hostfile/",
-            category: .malware,
-            domainCount: 19_000
-        ),
-        CatalogEntry(
-            id: "oisd-small",
-            name: "OISD Small",
-            description: "Lightweight list blocking ads, trackers, and telemetry.",
-            url: "https://small.oisd.nl/domainswild2",
-            category: .privacy,
-            domainCount: 56_000
-        ),
-        CatalogEntry(
-            id: "easylist",
-            name: "EasyList",
-            description: "The primary filter list that removes most adverts from web pages.",
-            url: "https://easylist.to/easylist/easylist.txt",
-            category: .ads,
-            domainCount: 84_000,
-            featured: true
-        ),
-        CatalogEntry(
-            id: "easyprivacy",
-            name: "EasyPrivacy",
-            description: "Removes all forms of tracking from the internet.",
-            url: "https://easylist.to/easylist/easyprivacy.txt",
-            category: .trackers,
-            domainCount: 21_000,
-            featured: true
-        ),
-        CatalogEntry(
-            id: "oisd-full",
-            name: "OISD Full",
-            description: "Comprehensive blocklist covering ads, trackers, malware, and telemetry.",
-            url: "https://big.oisd.nl/domainswild2",
-            category: .privacy,
-            domainCount: 201_000,
-            featured: true
-        ),
-        CatalogEntry(
-            id: "phishing-army",
-            name: "Phishing Army",
-            description: "Block phishing and fraud websites.",
-            url: "https://phishing.army/download/phishing_army_blocklist_extended.txt",
-            category: .malware,
-            domainCount: 62_000,
-            featured: true
-        ),
-    ]
+    static let fallbackResource = "catalog-fallback"
+
+    /// Bundled fallback catalog loaded from `Resources/catalog-fallback.json`: used
+    /// before the remote catalog loads, and whenever it can't be reached. Edit the
+    /// JSON to change the shipped fallback — no code change needed. The ids referenced
+    /// by `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
+    public static let bundled: [CatalogEntry] = {
+        guard
+            let url = Bundle.module.url(forResource: fallbackResource, withExtension: "json"),
+            let data = try? Data(contentsOf: url),
+            let entries = try? decode(data)
+        else {
+            assertionFailure("Bundled catalog-fallback.json is missing or malformed")
+            return []
+        }
+        return entries
+    }()
+
+    /// Decodes catalog JSON in either shape: a bare array of entries, or an object
+    /// wrapping them under a `lists` key. Shared by the bundled file and remote fetch.
+    static func decode(_ data: Data) throws -> [CatalogEntry] {
+        let decoder = JSONDecoder()
+        if let entries = try? decoder.decode([CatalogEntry].self, from: data) {
+            return entries
+        }
+        return try decoder.decode(CatalogWrapper.self, from: data).lists
+    }
+
+    struct CatalogWrapper: Decodable {
+        let lists: [CatalogEntry]
+    }
 }
 
 public struct CatalogFetcher: Sendable {
@@ -147,14 +106,6 @@ public struct CatalogFetcher: Sendable {
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw FetchError.httpStatus(http.statusCode)
         }
-        let decoder = JSONDecoder()
-        if let entries = try? decoder.decode([CatalogEntry].self, from: data) {
-            return entries
-        }
-        return try decoder.decode(CatalogWrapper.self, from: data).lists
-    }
-
-    private struct CatalogWrapper: Decodable {
-        let lists: [CatalogEntry]
+        return try Catalog.decode(data)
     }
 }
