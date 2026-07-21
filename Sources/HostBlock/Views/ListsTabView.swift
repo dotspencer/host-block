@@ -7,6 +7,7 @@ struct ListsTabView: View {
     @State private var customName = ""
     @State private var customURL = ""
     @State private var addError: String?
+    @State private var hoveredID: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: s(0)) {
@@ -66,7 +67,8 @@ struct ListsTabView: View {
     // MARK: Row
 
     private func row(_ source: BlocklistSource) -> some View {
-        HStack(alignment: .center, spacing: s(12)) {
+        let hovered = hoveredID == source.id
+        return HStack(alignment: .center, spacing: s(12)) {
             Toggle("", isOn: Binding(
                 get: { AppState.shared.source(withID: source.id)?.enabled ?? false },
                 set: { AppState.shared.setSource(id: source.id, enabled: $0) }
@@ -85,7 +87,32 @@ struct ListsTabView: View {
                     .font(.system(size: s(12), design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
-            Spacer(minLength: s(0))
+            Spacer(minLength: s(8))
+
+            // Trash stays in the layout (opacity-toggled) so revealing it on hover
+            // doesn't shift the row content.
+            Button(action: { state.removeSource(id: source.id) }) {
+                Image(systemName: "trash")
+                    .font(.system(size: s(14)))
+                    .foregroundStyle(Theme.color(for: .malware))
+            }
+            .buttonStyle(.plain)
+            .help("Remove \(source.name)")
+            .opacity(hovered ? 1 : 0)
+            .allowsHitTesting(hovered)
+        }
+        // Highlight extends slightly beyond the content so the hover band spans the
+        // row like the mockup, without moving the content.
+        .background(
+            RoundedRectangle(cornerRadius: s(8))
+                .fill(hovered ? Theme.surface : Color.clear)
+                .padding(.horizontal, s(-8))
+                .padding(.vertical, s(-6))
+        )
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            if hovering { hoveredID = source.id }
+            else if hoveredID == source.id { hoveredID = nil }
         }
         .contextMenu {
             Button("Remove List", role: .destructive) {

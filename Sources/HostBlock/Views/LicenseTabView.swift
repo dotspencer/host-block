@@ -226,11 +226,14 @@ struct LicenseTabView: View {
 private struct ActivationField: View {
     @ObservedObject private var state = AppState.shared
     @State private var key = ""
+    @FocusState private var isInputFocused: Bool
 
     var body: some View {
         VStack(spacing: s(10)) {
-            TextField("HSTBLK-XXXX-XXXX-XXXX", text: $key)
+            TextField("XXXX-XXXX-XXXX-XXXX", text: $key)
                 .textFieldStyle(.plain)
+                .tint(.white)
+                .focused($isInputFocused)
                 .font(.system(size: s(14), design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
@@ -247,6 +250,14 @@ private struct ActivationField: View {
                 .padding(s(12))
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: s(8)))
                 .overlay(RoundedRectangle(cornerRadius: s(8)).stroke(Theme.stroke))
+                // .defaultFocus (the declarative way) silently fails inside a
+                // MenuBarExtra popover — the window isn't key when it's evaluated.
+                // Setting focus a beat after appear is the reliable workaround here.
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isInputFocused = true
+                    }
+                }
 
             Button(action: { state.activate(licenseKey: key) }) {
                 Text(state.isActivating ? "Activating…" : "Activate License")

@@ -33,6 +33,7 @@ struct BrowseTabView: View {
             Image(systemName: "magnifyingglass").foregroundStyle(Theme.textSecondary)
             TextField("Search blocklists…", text: $search)
                 .textFieldStyle(.plain)
+                .tint(.white)
                 .foregroundStyle(Theme.textPrimary)
         }
         .font(.system(size: s(14)))

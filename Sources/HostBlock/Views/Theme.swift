@@ -4,7 +4,7 @@ import SwiftUI
 /// Global UI scale for the dropdown — lower is more compact. Every fixed font size,
 /// padding, corner radius, and frame dimension is multiplied by this via `s()`, so
 /// the whole panel scales proportionally from one knob.
-let uiScale: CGFloat = 0.85
+let uiScale: CGFloat = 0.88
 @inline(__always) func s(_ value: CGFloat) -> CGFloat { value * uiScale }
 
 /// Colors, fonts, and small shared building blocks for the redesigned dropdown.
