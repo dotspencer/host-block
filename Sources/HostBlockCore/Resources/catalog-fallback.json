@@ -8,11 +8,11 @@
     "enabledByDefault": true
   },
   {
-    "id": "oisd-nsfw",
-    "name": "OISD NSFW",
-    "description": "Adult and pornographic sites.",
-    "url": "https://nsfw.oisd.nl/domainswild2",
-    "domainCount": 470000
+    "id": "oisd-nsfw-small",
+    "name": "OISD NSFW (Small)",
+    "description": "Adult and pornographic sites (lighter list).",
+    "url": "https://nsfw-small.oisd.nl/domainswild2",
+    "domainCount": 21000
   },
   {
     "id": "hagezi-pro",

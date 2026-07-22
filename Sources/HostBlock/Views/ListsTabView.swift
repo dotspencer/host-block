@@ -34,7 +34,7 @@ struct ListsTabView: View {
                 }
                 .padding(14)
             }
-            .frame(height: 264)
+            .frame(height: 300)
 
             Divider().overlay(Theme.separator)
 
@@ -44,17 +44,16 @@ struct ListsTabView: View {
             Divider().overlay(Theme.separator)
 
             Button(action: { state.updateNow() }) {
-                HStack(spacing: 7) {
+                HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(Theme.accent)
-                    Text("Update All Lists Now")
-                        .foregroundStyle(Theme.textPrimary)
+                    Text("Update all lists now")
                 }
                 .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 11)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 7))
-                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.stroke))
+                .padding(.vertical, 7)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.stroke))
                 // Spinner floats in an overlay so it stays out of the button's layout
                 // flow — toggling it doesn't re-lay-out the button content, which is
                 // what made MenuBarExtra re-anchor and shift the window a few pixels.
@@ -62,7 +61,7 @@ struct ListsTabView: View {
                     if state.isWorking {
                         ProgressView()
                             .controlSize(.small)
-                            .padding(.trailing, 11)
+                            .padding(.trailing, 10)
                     }
                 }
             }
@@ -85,6 +84,10 @@ struct ListsTabView: View {
             ))
             .labelsHidden()
             .toggleStyle(GreenToggleStyle())
+            // While blocking is paused, per-list toggles do nothing to the hosts file,
+            // so disable them to avoid "why isn't my list applying?" confusion.
+            .disabled(!state.protectionEnabled)
+            .opacity(state.protectionEnabled ? 1 : 0.4)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
@@ -100,7 +103,7 @@ struct ListsTabView: View {
                         .help("View the raw list")
                     }
                 }
-                Text("\(Theme.abbreviate(source.domainCount)) domains · \(Theme.relativeAge(source.lastFetched))")
+                Text(meta(source))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -132,6 +135,14 @@ struct ListsTabView: View {
             if hovering { hoveredID = source.id }
             else if hoveredID == source.id { hoveredID = nil }
         }
+    }
+
+    /// "48K domains · 2h ago" — the age is dropped for a list that's never been
+    /// fetched (an unhelpful "never").
+    private func meta(_ source: BlocklistSource) -> String {
+        let count = "\(Theme.abbreviate(source.domainCount)) domains"
+        guard let fetched = source.lastFetched else { return count }
+        return "\(count) · \(Theme.relativeAge(fetched))"
     }
 
     // MARK: Custom list

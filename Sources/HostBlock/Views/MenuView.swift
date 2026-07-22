@@ -105,7 +105,7 @@ struct MenuView: View {
             }
             // Full-width, full-height cell with a solid hit shape so a click anywhere
             // in the tab column — including the space above and below the label — selects it.
-            .frame(maxWidth: .infinity, minHeight: 42)
+            .frame(maxWidth: .infinity, minHeight: 36)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
