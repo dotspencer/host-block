@@ -1,74 +1,92 @@
 [
   {
-    "id": "adguard-dns",
-    "name": "AdGuard DNS",
-    "description": "Blocks ads and trackers using the AdGuard DNS filter.",
-    "url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-    "category": "ads",
-    "domainCount": 48000,
-    "featured": false
+    "id": "oisd-big",
+    "name": "OISD Big",
+    "description": "Comprehensive blocking of ads, trackers, and malware, tuned to avoid breaking sites. The recommended all-in-one list.",
+    "url": "https://big.oisd.nl/domainswild2",
+    "category": "privacy",
+    "domainCount": 330000,
+    "featured": true
+  },
+  {
+    "id": "oisd-nsfw",
+    "name": "OISD NSFW",
+    "description": "Blocks adult and pornographic sites. Ideal for family devices.",
+    "url": "https://nsfw.oisd.nl/domainswild2",
+    "category": "adult",
+    "domainCount": 470000,
+    "featured": true
+  },
+  {
+    "id": "hagezi-pro",
+    "name": "Hagezi Pro",
+    "description": "Aggressive all-in-one list covering ads, trackers, malware, and phishing. Maximum coverage.",
+    "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/pro.txt",
+    "category": "trackers",
+    "domainCount": 600000,
+    "featured": true
   },
   {
     "id": "stevenblack-unified",
     "name": "StevenBlack Unified",
-    "description": "Unified hosts file consolidating ad, malware, and tracker sources.",
+    "description": "The classic unified hosts file consolidating trusted ad and malware sources.",
     "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-    "category": "trackers",
-    "domainCount": 123000,
-    "featured": false
-  },
-  {
-    "id": "malware-domains",
-    "name": "Malware Domain List",
-    "description": "Known malware, phishing, and command-and-control domains.",
-    "url": "https://urlhaus.abuse.ch/downloads/hostfile/",
-    "category": "malware",
-    "domainCount": 19000,
-    "featured": false
-  },
-  {
-    "id": "oisd-small",
-    "name": "OISD Small",
-    "description": "Lightweight list blocking ads, trackers, and telemetry.",
-    "url": "https://small.oisd.nl/domainswild2",
-    "category": "privacy",
-    "domainCount": 56000,
-    "featured": false
-  },
-  {
-    "id": "easylist",
-    "name": "EasyList",
-    "description": "The primary filter list that removes most adverts from web pages.",
-    "url": "https://easylist.to/easylist/easylist.txt",
     "category": "ads",
-    "domainCount": 84000,
-    "featured": true
-  },
-  {
-    "id": "easyprivacy",
-    "name": "EasyPrivacy",
-    "description": "Removes all forms of tracking from the internet.",
-    "url": "https://easylist.to/easylist/easyprivacy.txt",
-    "category": "trackers",
-    "domainCount": 21000,
-    "featured": true
-  },
-  {
-    "id": "oisd-full",
-    "name": "OISD Full",
-    "description": "Comprehensive blocklist covering ads, trackers, malware, and telemetry.",
-    "url": "https://big.oisd.nl/domainswild2",
-    "category": "privacy",
-    "domainCount": 201000,
-    "featured": true
+    "domainCount": 90000,
+    "featured": false
   },
   {
     "id": "phishing-army",
     "name": "Phishing Army",
-    "description": "Block phishing and fraud websites.",
+    "description": "Blocks phishing and fraud websites. Layer on top of an ads/trackers list.",
     "url": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
     "category": "malware",
-    "domainCount": 62000,
-    "featured": true
+    "domainCount": 152000,
+    "featured": false
+  },
+  {
+    "id": "no-google",
+    "name": "No Google",
+    "description": "Blocks Google's tracking and services across its domains. Aggressive — expect Google sign-in, Search, and other Google sites to break.",
+    "url": "https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt",
+    "category": "trackers",
+    "domainCount": 6800,
+    "featured": false
+  },
+  {
+    "id": "no-facebook",
+    "name": "No Facebook & Instagram",
+    "description": "Blocks Meta's Facebook, Instagram, and their tracking domains.",
+    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/facebook.txt",
+    "category": "social",
+    "domainCount": 22000,
+    "featured": false
+  },
+  {
+    "id": "no-tiktok",
+    "name": "No TikTok",
+    "description": "Blocks TikTok and its tracking domains.",
+    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/tiktok.txt",
+    "category": "social",
+    "domainCount": 3700,
+    "featured": false
+  },
+  {
+    "id": "gambling",
+    "name": "Gambling",
+    "description": "Blocks online gambling and betting sites.",
+    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/gambling.txt",
+    "category": "gambling",
+    "domainCount": 342000,
+    "featured": false
+  },
+  {
+    "id": "cryptomining",
+    "name": "Cryptomining",
+    "description": "Blocks cryptocurrency miners and mining pools.",
+    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/crypto.txt",
+    "category": "malware",
+    "domainCount": 1300,
+    "featured": false
   }
 ]
