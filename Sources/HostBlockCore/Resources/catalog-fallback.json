@@ -2,7 +2,7 @@
   {
     "id": "oisd-big",
     "name": "OISD Big",
-    "description": "Comprehensive blocking of ads, trackers, and malware, tuned to avoid breaking sites. The recommended all-in-one list.",
+    "description": "Ads, trackers, and malware — tuned not to break sites. Recommended.",
     "url": "https://big.oisd.nl/domainswild2",
     "category": "privacy",
     "domainCount": 330000,
@@ -11,7 +11,7 @@
   {
     "id": "oisd-nsfw",
     "name": "OISD NSFW",
-    "description": "Blocks adult and pornographic sites. Ideal for family devices.",
+    "description": "Adult and pornographic sites.",
     "url": "https://nsfw.oisd.nl/domainswild2",
     "category": "adult",
     "domainCount": 470000,
@@ -20,7 +20,7 @@
   {
     "id": "hagezi-pro",
     "name": "Hagezi Pro",
-    "description": "Aggressive all-in-one list covering ads, trackers, malware, and phishing. Maximum coverage.",
+    "description": "Aggressive all-in-one: ads, trackers, malware, phishing.",
     "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/pro.txt",
     "category": "trackers",
     "domainCount": 600000,
@@ -29,19 +29,10 @@
   {
     "id": "stevenblack-unified",
     "name": "StevenBlack Unified",
-    "description": "The classic unified hosts file consolidating trusted ad and malware sources.",
+    "description": "The classic ads + malware hosts file.",
     "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
     "category": "ads",
     "domainCount": 90000,
-    "featured": false
-  },
-  {
-    "id": "phishing-army",
-    "name": "Phishing Army",
-    "description": "Blocks phishing and fraud websites. Layer on top of an ads/trackers list.",
-    "url": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
-    "category": "malware",
-    "domainCount": 152000,
     "featured": false
   }
 ]

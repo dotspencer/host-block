@@ -106,9 +106,19 @@ struct BrowseTabView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("\(Theme.abbreviate(entry.domainCount)) domains")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Theme.textTertiary)
+                HStack(spacing: 6) {
+                    Text("\(Theme.abbreviate(entry.domainCount)) domains")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Theme.textTertiary)
+                    if let url = URL(string: entry.url) {
+                        Link(destination: url) {
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.info)
+                        }
+                        .help("View the raw list")
+                    }
+                }
             }
             Spacer(minLength: 7)
             addButton(entry)

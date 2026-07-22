@@ -3,14 +3,11 @@
 A lightweight native macOS menu bar app for family sysadmins: hosts-file domain
 blocking for non-technical family members, then forget about it.
 
-- Curated blocklist catalog (ads, trackers, malware, NSFW) plus custom lists by URL
-  — domain lists, hosts files, and Adblock-style lists are all parsed.
+- Curated blocklist catalog (ads, trackers, malware, NSFW) plus custom lists by URL. Domain lists, hosts files, and Adblock-style lists are all parsed.
 - Writes `/etc/hosts` between `#HOSTBLOCK_START`/`#HOSTBLOCK_END` as strict
   `0.0.0.0 domain` lines (deduped, validated), then flushes DNS.
-- Auto-updates daily; manual Update / Flush DNS in the menu; toggle blocking on/off.
-- **One admin prompt, ever** — setup installs a privileged helper so later updates
-  never ask for a password.
-- Gumroad-licensed: free Personal (1 device) or paid Pro (unlimited).
+- Auto-updates lists daily.
+- Gumroad-licensed: Personal is free (1 device), Pro is paid (unlimited devices).
 
 ## Build
 
@@ -66,5 +63,8 @@ staged hosts block).
 
 ## Blocklist sources
 
-The catalog points at third-party lists (oisd, Hagezi, StevenBlack, Phishing Army),
-each under its own license — review them before shipping inside a paid product.
+HostBlock ships only URLs and never bundles or redistributes a list — each device
+downloads directly from the source, so distribution-triggered terms (GPLv3
+copyleft, MIT notice) don't apply. Still check each list's license before adding
+to the default catalog, and avoid **NonCommercial (CC BY-NC)** as NC restricts
+commercial _use_.
