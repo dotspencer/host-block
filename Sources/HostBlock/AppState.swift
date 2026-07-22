@@ -90,7 +90,6 @@ final class AppState: ObservableObject {
     @Published var selectedTab: Tab = .lists
 
     private let store: ConfigStore
-    private let fetcher = BlocklistFetcher()
     private let helper = PrivilegedHelper()
     private let catalogFetcher = CatalogFetcher(urlString: AppConstants.catalogURL)
     private let gumroad = GumroadClient(
@@ -99,6 +98,8 @@ final class AppState: ObservableObject {
     )
     private var refreshTimer: Timer?
     private var bootstrapped = false
+    /// Set when a toggle happens mid-apply; triggers one more apply pass (coalescing).
+    private var reapplyRequested = false
 
     /// Demo mode (HOSTBLOCK_DEMO=1) renders the UI from seeded data without any network
     /// or privileged side effects — used to screenshot the design against the mockups.
@@ -452,64 +453,57 @@ final class AppState: ObservableObject {
     }
 
     private func applyBlocklists(forceRefresh: Bool) async {
-        guard !demoMode else { return }
-        guard license != nil, helperInstalled else { return }
-        guard !isWorking else { return }
-        isWorking = true
-        lastError = nil
-        defer { isWorking = false }
-
-        var allDomains = Set<String>()
-        var sourceErrors: [String] = []
-        var counts: [String: Int] = [:]
-        for source in sources where source.enabled {
-            do {
-                let domains = try await loadDomains(for: source, forceRefresh: forceRefresh)
-                allDomains.formUnion(domains)
-                counts[source.id] = domains.count
-            } catch {
-                sourceErrors.append("\(source.name): \(error.localizedDescription)")
-            }
+        guard !demoMode, license != nil, helperInstalled else { return }
+        // Coalesce: if an apply is already running, ask for one more pass afterward so
+        // rapid toggles all take effect instead of being dropped.
+        if isWorking {
+            reapplyRequested = true
+            return
         }
+        isWorking = true
+        defer { isWorking = false }
+        var force = forceRefresh
+        repeat {
+            reapplyRequested = false
+            await performApply(forceRefresh: force)
+            force = false
+        } while reapplyRequested
+    }
+
+    private func performApply(forceRefresh: Bool) async {
+        lastError = nil
+        let lists = sources.filter(\.enabled).map { HostsBuilder.List(id: $0.id, name: $0.name, url: $0.url) }
+        let builder = HostsBuilder(cacheDir: store.cacheDir, stagingURL: store.stagingFileURL)
+
+        // Assemble domains and write the staging file OFF the main actor, so the UI
+        // (e.g. the toggle just clicked) repaints immediately instead of freezing while
+        // hundreds of thousands of domains are read, deduplicated, and sorted.
+        let result = await Task.detached(priority: .userInitiated) {
+            await builder.build(lists: lists, forceRefresh: forceRefresh)
+        }.value
 
         let now = Date()
-        for (id, count) in counts {
+        for (id, count) in result.counts {
             if let index = sources.firstIndex(where: { $0.id == id }) {
                 sources[index].domainCount = count
                 sources[index].lastFetched = now
             }
         }
-
-        let sorted = allDomains.sorted()
+        guard result.wroteStaging else {
+            lastError = "Couldn't build the block list."
+            return
+        }
         do {
-            try DomainParser.hostsLines(for: sorted)
-                .write(to: store.stagingFileURL, atomically: true, encoding: .utf8)
             try await helper.apply(stagingFile: store.stagingFileURL)
-            blockedCount = sorted.count
+            blockedCount = result.total
             lastUpdated = now
             saveConfig()
         } catch {
             lastError = error.localizedDescription
             return
         }
-        if !sourceErrors.isEmpty {
-            lastError = sourceErrors.joined(separator: "\n")
-        }
-    }
-
-    private func loadDomains(for source: BlocklistSource, forceRefresh: Bool) async throws -> [String] {
-        if !forceRefresh, let cached = store.readCache(sourceID: source.id) {
-            return cached
-        }
-        do {
-            let domains = try await fetcher.download(source)
-            store.writeCache(sourceID: source.id, domains: domains)
-            return domains
-        } catch {
-            if let cached = store.readCache(sourceID: source.id) {
-                return cached
-            }
-            throw error
+        if !result.errors.isEmpty {
+            lastError = result.errors.joined(separator: "\n")
         }
     }
 }
