@@ -1,15 +1,9 @@
 import HostBlockCore
 import SwiftUI
 
-/// Global UI scale for the dropdown — lower is more compact. Every fixed font size,
-/// padding, corner radius, and frame dimension is multiplied by this via `s()`, so
-/// the whole panel scales proportionally from one knob.
-let uiScale: CGFloat = 0.88
-@inline(__always) func s(_ value: CGFloat) -> CGFloat { value * uiScale }
-
 /// Colors, fonts, and small shared building blocks for the redesigned dropdown.
 enum Theme {
-    static let panelWidth: CGFloat = s(360)
+    static let panelWidth: CGFloat = 350
 
     // Dark surface palette (the dropdown commits to a dark look). Values sampled from
     // the reference mockups: a flat neutral charcoal panel with slightly lighter surfaces.
@@ -64,12 +58,12 @@ struct CategoryBadge: View {
     let category: ListCategory
     var body: some View {
         Text(category.label)
-            .font(.system(size: s(10), weight: .bold, design: .monospaced))
+            .font(.system(size: 9, weight: .bold, design: .monospaced))
             .tracking(0.5)
             .foregroundStyle(Theme.color(for: category))
-            .padding(.horizontal, s(6))
-            .padding(.vertical, s(2))
-            .background(Theme.color(for: category).opacity(0.15), in: RoundedRectangle(cornerRadius: s(4)))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Theme.color(for: category).opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
     }
 }
 
@@ -79,12 +73,12 @@ struct StatusBadge: View {
     let color: Color
     var body: some View {
         Text(text)
-            .font(.system(size: s(10), weight: .bold, design: .monospaced))
+            .font(.system(size: 9, weight: .bold, design: .monospaced))
             .tracking(0.5)
             .foregroundStyle(color)
-            .padding(.horizontal, s(6))
-            .padding(.vertical, s(2))
-            .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: s(4)))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
     }
 }
 
@@ -94,15 +88,15 @@ struct GreenToggleStyle: ToggleStyle {
         Button {
             configuration.isOn.toggle()
         } label: {
-            RoundedRectangle(cornerRadius: s(11))
+            RoundedRectangle(cornerRadius: 10)
                 .fill(configuration.isOn ? Theme.accent : Color.white.opacity(0.18))
-                .frame(width: s(40), height: s(22))
+                .frame(width: 35, height: 19)
                 .overlay(
                     Circle()
                         .fill(.white)
-                        .padding(s(2))
-                        .frame(width: s(22), height: s(22))
-                        .offset(x: configuration.isOn ? s(9) : -s(9))
+                        .padding(2)
+                        .frame(width: 19, height: 19)
+                        .offset(x: configuration.isOn ? 8 : -8)
                 )
                 .animation(.easeInOut(duration: 0.15), value: configuration.isOn)
         }
@@ -113,7 +107,7 @@ struct GreenToggleStyle: ToggleStyle {
 extension View {
     func sectionHeader() -> some View {
         self
-            .font(.system(size: s(11), weight: .semibold, design: .monospaced))
+            .font(.system(size: 10, weight: .semibold, design: .monospaced))
             .tracking(1.0)
             .foregroundStyle(Theme.textSecondary)
     }

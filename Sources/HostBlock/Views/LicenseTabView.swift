@@ -12,17 +12,17 @@ struct LicenseTabView: View {
                 activation
             }
         }
-        .padding(s(16))
+        .padding(14)
     }
 
     // MARK: Active license
 
     private func active(_ license: LicenseInfo) -> some View {
-        VStack(spacing: s(12)) {
+        VStack(spacing: 11) {
             licenseCard(license)
             if let error = state.deactivationError {
                 Text(error)
-                    .font(.system(size: s(12)))
+                    .font(.system(size: 11))
                     .foregroundStyle(Theme.color(for: .malware))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,19 +34,19 @@ struct LicenseTabView: View {
     }
 
     private func licenseCard(_ license: LicenseInfo) -> some View {
-        VStack(spacing: s(0)) {
+        VStack(spacing: 0) {
             // Title: tier + device limit (e.g. "Personal · 1 device").
-            HStack(spacing: s(6)) {
+            HStack(spacing: 5) {
                 Text(license.tier.displayName)
-                    .font(.system(size: s(14), weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("· \(license.tier.deviceLimit)")
-                    .font(.system(size: s(12)))
+                    .font(.system(size: 11))
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()
             }
-            .padding(.horizontal, s(14))
-            .padding(.vertical, s(10))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
 
             rowDivider
             infoRow(label: "Email", value: license.email)
@@ -57,35 +57,35 @@ struct LicenseTabView: View {
             rowDivider
             removeRow
         }
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: s(12)))
-        .overlay(RoundedRectangle(cornerRadius: s(12)).stroke(Theme.stroke))
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Theme.stroke))
     }
 
     private var rowDivider: some View {
-        Rectangle().fill(Theme.separator).frame(height: s(1))
+        Rectangle().fill(Theme.separator).frame(height: 1)
     }
 
     private func infoRow(label: String, value: String) -> some View {
-        HStack(spacing: s(12)) {
+        HStack(spacing: 11) {
             Text(label)
-                .font(.system(size: s(12)))
+                .font(.system(size: 11))
                 .foregroundStyle(Theme.textSecondary)
-            Spacer(minLength: s(8))
+            Spacer(minLength: 7)
             Text(value)
-                .font(.system(size: s(12), design: .monospaced))
+                .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
         }
-        .padding(.horizontal, s(14))
-        .padding(.vertical, s(8))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
     }
 
     private var removeRow: some View {
         Button(action: { state.deactivate() }) {
-            HStack(spacing: s(8)) {
+            HStack(spacing: 7) {
                 if state.isDeactivating {
                     ProgressView().controlSize(.small)
                 } else {
@@ -94,10 +94,10 @@ struct LicenseTabView: View {
                 Text(state.isDeactivating ? "Releasing device…" : "Remove license")
                 Spacer()
             }
-            .font(.system(size: s(12)))
+            .font(.system(size: 11))
             .foregroundStyle(Theme.textSecondary)
-            .padding(.horizontal, s(14))
-            .padding(.vertical, s(8))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -123,52 +123,52 @@ struct LicenseTabView: View {
     }
 
     private var upgradeCard: some View {
-        VStack(alignment: .leading, spacing: s(10)) {
-            HStack(spacing: s(8)) {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 7) {
                 Image(systemName: "info.circle").foregroundStyle(Theme.info)
                 Text("Upgrade to Pro")
-                    .font(.system(size: s(14), weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
             }
             Text("Use HostBlock on unlimited devices with a single Pro license.")
-                .font(.system(size: s(13)))
+                .font(.system(size: 11))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Link(destination: AppConstants.upgradeURL) {
-                HStack(spacing: s(6)) {
+                HStack(spacing: 5) {
                     Text("Upgrade to Pro")
-                    Image(systemName: "chevron.right").font(.system(size: s(11), weight: .bold))
+                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
                 }
-                .font(.system(size: s(13), weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, s(14))
-                .padding(.vertical, s(8))
-                .background(Theme.info, in: RoundedRectangle(cornerRadius: s(8)))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Theme.info, in: RoundedRectangle(cornerRadius: 7))
             }
             .buttonStyle(.plain)
         }
-        .padding(s(16))
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.info.opacity(0.08), in: RoundedRectangle(cornerRadius: s(12)))
-        .overlay(RoundedRectangle(cornerRadius: s(12)).stroke(Theme.info.opacity(0.25)))
+        .background(Theme.info.opacity(0.08), in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Theme.info.opacity(0.25)))
     }
 
     // MARK: Activation
 
     private var activation: some View {
-        VStack(spacing: s(14)) {
-            RoundedRectangle(cornerRadius: s(12))
+        VStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 11)
                 .fill(Theme.surfaceElevated)
-                .frame(width: s(56), height: s(56))
-                .overlay(Image(systemName: "key.fill").font(.system(size: s(22))).foregroundStyle(Theme.textSecondary))
-                .padding(.top, s(8))
+                .frame(width: 49, height: 49)
+                .overlay(Image(systemName: "key.fill").font(.system(size: 18)).foregroundStyle(Theme.textSecondary))
+                .padding(.top, 7)
 
-            VStack(spacing: s(4)) {
+            VStack(spacing: 4) {
                 Text("Activate HostBlock")
-                    .font(.system(size: s(17), weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Enter your license key to activate")
-                    .font(.system(size: s(13)))
+                    .font(.system(size: 11))
                     .foregroundStyle(Theme.textSecondary)
             }
 
@@ -176,7 +176,7 @@ struct LicenseTabView: View {
 
             if let error = state.activationError {
                 Text(error)
-                    .font(.system(size: s(12)))
+                    .font(.system(size: 11))
                     .foregroundStyle(Theme.color(for: .malware))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -187,29 +187,29 @@ struct LicenseTabView: View {
     }
 
     private var freeLicenseCard: some View {
-        VStack(alignment: .leading, spacing: s(6)) {
+        VStack(alignment: .leading, spacing: 5) {
             Text("Free Personal License")
-                .font(.system(size: s(14), weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
             Text("HostBlock is free for personal use on 1 device. Get a free key at hostblock.app.")
-                .font(.system(size: s(13)))
+                .font(.system(size: 11))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Link(destination: AppConstants.freeLicenseURL) {
-                HStack(spacing: s(4)) {
+                HStack(spacing: 4) {
                     Text("Get free license")
-                    Image(systemName: "chevron.right").font(.system(size: s(11), weight: .bold))
+                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
                 }
-                .font(.system(size: s(13), weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Theme.info)
             }
             .buttonStyle(.plain)
-            .padding(.top, s(2))
+            .padding(.top, 2)
         }
-        .padding(s(16))
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: s(12)))
-        .overlay(RoundedRectangle(cornerRadius: s(12)).stroke(Theme.stroke))
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Theme.stroke))
     }
 
     private static let dateFormatter: DateFormatter = {
@@ -229,12 +229,12 @@ private struct ActivationField: View {
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
-        VStack(spacing: s(10)) {
+        VStack(spacing: 9) {
             TextField("XXXX-XXXX-XXXX-XXXX", text: $key)
                 .textFieldStyle(.plain)
                 .tint(.white)
                 .focused($isInputFocused)
-                .font(.system(size: s(14), design: .monospaced))
+                .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
@@ -247,9 +247,9 @@ private struct ActivationField: View {
                         .trimmingCharacters(in: .whitespaces)
                     if cleaned != newValue { key = cleaned }
                 }
-                .padding(s(12))
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: s(8)))
-                .overlay(RoundedRectangle(cornerRadius: s(8)).stroke(Theme.stroke))
+                .padding(11)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.stroke))
                 // .defaultFocus (the declarative way) silently fails inside a
                 // MenuBarExtra popover — the window isn't key when it's evaluated.
                 // Setting focus a beat after appear is the reliable workaround here.
@@ -261,12 +261,12 @@ private struct ActivationField: View {
 
             Button(action: { state.activate(licenseKey: key) }) {
                 Text(state.isActivating ? "Activating…" : "Activate License")
-                    .font(.system(size: s(14), weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, s(12))
-                    .background(Theme.accent.opacity(0.25), in: RoundedRectangle(cornerRadius: s(8)))
-                    .overlay(RoundedRectangle(cornerRadius: s(8)).stroke(Theme.accent.opacity(0.4)))
+                    .padding(.vertical, 11)
+                    .background(Theme.accent.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.accent.opacity(0.4)))
             }
             .buttonStyle(.plain)
             .disabled(state.isActivating)

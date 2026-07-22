@@ -10,7 +10,7 @@ struct MenuView: View {
     }
 
     var body: some View {
-        VStack(spacing: s(0)) {
+        VStack(spacing: 0) {
             header
             Divider().overlay(Theme.separator)
             tabBar
@@ -27,20 +27,20 @@ struct MenuView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(spacing: s(12)) {
-            RoundedRectangle(cornerRadius: s(10))
+        HStack(spacing: 11) {
+            RoundedRectangle(cornerRadius: 9)
                 .fill(isActive ? Theme.accent.opacity(0.18) : Theme.surfaceElevated)
-                .frame(width: s(44), height: s(44))
+                .frame(width: 39, height: 39)
                 .overlay(
                     Image(systemName: isActive ? "shield.fill" : "shield.slash")
-                        .font(.system(size: s(20)))
+                        .font(.system(size: 18))
                         .foregroundStyle(isActive ? Theme.accent : Theme.textSecondary)
                 )
 
-            VStack(alignment: .leading, spacing: s(3)) {
-                HStack(spacing: s(8)) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
                     Text("HostBlock")
-                        .font(.system(size: s(16), weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(Theme.textPrimary)
                     if state.license != nil {
                         StatusBadge(
@@ -50,7 +50,7 @@ struct MenuView: View {
                     }
                 }
                 Text(subline)
-                    .font(.system(size: s(12), design: .monospaced))
+                    .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
 
@@ -65,7 +65,7 @@ struct MenuView: View {
             .disabled(state.license == nil)
             .opacity(state.license == nil ? 0.4 : 1)
         }
-        .padding(s(16))
+        .padding(14)
     }
 
     private var subline: String {
@@ -77,7 +77,7 @@ struct MenuView: View {
     // MARK: Tab bar
 
     private var tabBar: some View {
-        HStack(spacing: s(0)) {
+        HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { tab in
                 tabButton(tab)
             }
@@ -90,22 +90,22 @@ struct MenuView: View {
         return Button {
             if !locked { state.selectedTab = tab }
         } label: {
-            VStack(spacing: s(0)) {
-                HStack(spacing: s(6)) {
+            VStack(spacing: 0) {
+                HStack(spacing: 5) {
                     Image(systemName: locked ? "lock.fill" : tab.icon)
-                        .font(.system(size: s(12), weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                     Text(tab.title)
-                        .font(.system(size: s(13), weight: selected ? .semibold : .regular))
+                        .font(.system(size: 12, weight: selected ? .semibold : .regular))
                 }
                 .foregroundStyle(selected ? Theme.textPrimary : (locked ? Theme.textTertiary : Theme.textSecondary))
                 .frame(maxHeight: .infinity)
                 Rectangle()
                     .fill(selected ? Theme.accent : .clear)
-                    .frame(height: s(2))
+                    .frame(height: 2)
             }
             // Full-width, full-height cell with a solid hit shape so a click anywhere
             // in the tab column — including the space above and below the label — selects it.
-            .frame(maxWidth: .infinity, minHeight: s(48))
+            .frame(maxWidth: .infinity, minHeight: 42)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -128,7 +128,7 @@ struct MenuView: View {
     private var footer: some View {
         HStack {
             Text("v\(AppConstants.appVersion)")
-                .font(.system(size: s(12), design: .monospaced))
+                .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(Theme.textTertiary)
             Spacer()
             Button("Preferences") { WindowManager.shared.showPreferences() }
@@ -139,7 +139,7 @@ struct MenuView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(Theme.textSecondary)
         }
-        .font(.system(size: s(13)))
-        .padding(s(16))
+        .font(.system(size: 11))
+        .padding(14)
     }
 }
