@@ -1,20 +1,23 @@
 import Foundation
 
-/// One entry in the curated Browse catalog.
+/// One built-in "default" list. The catalog defines the set every user always has.
 public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
     public var description: String
     public var url: String
-    /// Advertised domain count, shown until the list is added and fetched for real.
+    /// Advertised domain count, shown until the list is fetched for real.
     public var domainCount: Int
+    /// Whether this list is on by default when it first appears for a user.
+    public var enabledByDefault: Bool
 
-    public init(id: String, name: String, description: String, url: String, domainCount: Int) {
+    public init(id: String, name: String, description: String, url: String, domainCount: Int, enabledByDefault: Bool = false) {
         self.id = id
         self.name = name
         self.description = description
         self.url = url
         self.domainCount = domainCount
+        self.enabledByDefault = enabledByDefault
     }
 
     public init(from decoder: Decoder) throws {
@@ -24,6 +27,7 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
         description = try c.decodeIfPresent(String.self, forKey: .description) ?? ""
         url = try c.decode(String.self, forKey: .url)
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
+        enabledByDefault = try c.decodeIfPresent(Bool.self, forKey: .enabledByDefault) ?? false
     }
 
     public func asSource(enabled: Bool) -> BlocklistSource {
@@ -33,6 +37,7 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
             detail: URL(string: url)?.host,
             url: url,
             enabled: enabled,
+            isCustom: false,
             domainCount: domainCount
         )
     }

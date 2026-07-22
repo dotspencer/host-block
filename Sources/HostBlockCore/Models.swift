@@ -162,17 +162,6 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
-public enum DefaultLists {
-    /// Seeded on a fresh install so the app isn't empty: OISD Big, the recommended
-    /// all-in-one, enabled by default. The sysadmin adds NSFW/others from Browse as
-    /// needed. Ids match the catalog so a seeded list reads as "Added" there.
-    public static var seed: [BlocklistSource] {
-        Catalog.bundled
-            .filter { ["oisd-big"].contains($0.id) }
-            .map { $0.asSource(enabled: true) }
-    }
-}
-
 // MARK: - App configuration
 
 public struct AppConfig: Codable, Sendable {
@@ -181,8 +170,10 @@ public struct AppConfig: Codable, Sendable {
     public var lastUpdated: Date?
     public var blockedCount: Int
 
+    /// Sources default to empty: the default lists are merged in from the catalog on
+    /// launch (see `AppState.mergeDefaults`), not seeded into the persisted config.
     public init(
-        sources: [BlocklistSource] = DefaultLists.seed,
+        sources: [BlocklistSource] = [],
         protectionEnabled: Bool = true,
         lastUpdated: Date? = nil,
         blockedCount: Int = 0

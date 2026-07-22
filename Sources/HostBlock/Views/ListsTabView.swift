@@ -27,7 +27,7 @@ struct ListsTabView: View {
                         ForEach(customSources) { row($0) }
                     }
                     if state.sources.isEmpty {
-                        Text("No lists yet. Add one from Browse or below.")
+                        Text("No lists yet — add a custom one below.")
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -76,7 +76,8 @@ struct ListsTabView: View {
     // MARK: Row
 
     private func row(_ source: BlocklistSource) -> some View {
-        let hovered = hoveredID == source.id
+        // Only custom lists get the hover-reveal trash; default lists can't be removed.
+        let hovered = source.isCustom && hoveredID == source.id
         return HStack(alignment: .center, spacing: 11) {
             Toggle("", isOn: Binding(
                 get: { AppState.shared.source(withID: source.id)?.enabled ?? false },
@@ -86,29 +87,39 @@ struct ListsTabView: View {
             .toggleStyle(GreenToggleStyle())
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(source.name)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 6) {
+                    Text(source.name)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    if let url = URL(string: source.url) {
+                        Link(destination: url) {
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.info)
+                        }
+                        .help("View the raw list")
+                    }
+                }
                 Text("\(Theme.abbreviate(source.domainCount)) domains · \(Theme.relativeAge(source.lastFetched))")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 7)
 
-            // Trash stays in the layout (opacity-toggled) so revealing it on hover
-            // doesn't shift the row content.
-            Button(action: { state.removeSource(id: source.id) }) {
-                Image(systemName: "trash")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.danger)
+            if source.isCustom {
+                // Trash stays in the layout (opacity-toggled) so revealing it on hover
+                // doesn't shift the row content.
+                Button(action: { state.removeSource(id: source.id) }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.danger)
+                }
+                .buttonStyle(.plain)
+                .help("Remove \(source.name)")
+                .opacity(hovered ? 1 : 0)
+                .allowsHitTesting(hovered)
             }
-            .buttonStyle(.plain)
-            .help("Remove \(source.name)")
-            .opacity(hovered ? 1 : 0)
-            .allowsHitTesting(hovered)
         }
-        // Highlight extends slightly beyond the content so the hover band spans the
-        // row like the mockup, without moving the content.
         .background(
             RoundedRectangle(cornerRadius: 7)
                 .fill(hovered ? Theme.surface : Color.clear)
@@ -117,13 +128,9 @@ struct ListsTabView: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering in
+            guard source.isCustom else { return }
             if hovering { hoveredID = source.id }
             else if hoveredID == source.id { hoveredID = nil }
-        }
-        .contextMenu {
-            Button("Remove List", role: .destructive) {
-                state.removeSource(id: source.id)
-            }
         }
     }
 

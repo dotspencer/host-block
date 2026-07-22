@@ -141,18 +141,11 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(source.detail, "easylist.to")
     }
 
-    func testBundledCatalogCoversSeedIDs() {
-        let catalogIDs = Set(Catalog.bundled.map(\.id))
-        for source in DefaultLists.seed {
-            XCTAssertTrue(catalogIDs.contains(source.id), "seed \(source.id) missing from catalog")
-        }
-    }
-
     /// Guards the JSON resource: if catalog-fallback.json is unbundled or malformed,
     /// `Catalog.bundled` returns empty and this fails loudly rather than shipping broken.
     func testBundledCatalogLoadsFromResource() {
         XCTAssertEqual(Catalog.bundled.count, 4)
-        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" })
+        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.enabledByDefault })
     }
 
     func testCatalogDecodesWrapperShape() throws {

@@ -118,7 +118,6 @@ struct MenuView: View {
     private var tabContent: some View {
         switch state.selectedTab {
         case .lists: ListsTabView()
-        case .browse: BrowseTabView()
         case .license: LicenseTabView()
         }
     }

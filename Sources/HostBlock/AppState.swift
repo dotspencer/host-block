@@ -72,7 +72,9 @@ final class AppState: ObservableObject {
     static let shared = AppState()
 
     @Published private(set) var license: LicenseInfo?
-    @Published private(set) var sources: [BlocklistSource] = DefaultLists.seed
+    @Published private(set) var sources: [BlocklistSource] = []
+    /// Definitions of the built-in "default" lists (bundled, refreshed remotely).
+    /// Merged into `sources` on launch so every user always has them.
     @Published private(set) var catalog: [CatalogEntry] = Catalog.bundled
     @Published private(set) var protectionEnabled = true
     @Published private(set) var helperInstalled = false
@@ -129,6 +131,7 @@ final class AppState: ObservableObject {
         launchAtLogin = SMAppService.mainApp.status == .enabled
         selectedTab = license == nil ? .license : .lists
         catalog = store.loadCatalog() ?? Catalog.bundled
+        mergeDefaults()
 
         // Demo mode stops here: no Gumroad checks, list downloads, hosts writes, or timers.
         guard !demoMode else {
@@ -156,7 +159,7 @@ final class AppState: ObservableObject {
         ))
     }
 
-    // MARK: Catalog
+    // MARK: Catalog / default lists
 
     private func refreshCatalog() async {
         do {
@@ -164,20 +167,31 @@ final class AppState: ObservableObject {
             guard !entries.isEmpty else { return }
             catalog = entries
             store.saveCatalog(entries)
+            mergeDefaults()
         } catch {
             // Keep the cached/bundled catalog when the remote one is unreachable.
         }
     }
 
-    func isInstalled(catalogID: String) -> Bool {
-        sources.contains { $0.id == catalogID }
-    }
-
-    func addFromCatalog(_ entry: CatalogEntry) {
-        guard !isInstalled(catalogID: entry.id) else { return }
-        sources.append(entry.asSource(enabled: true))
+    /// Ensures every catalog list is present in `sources` as a non-deletable default,
+    /// preserving the user's on/off choice and fetched counts. Custom (URL-added)
+    /// lists are kept as-is. Runs on launch and whenever the catalog refreshes, so a
+    /// newly-shipped default list appears (off by default) without any user action.
+    private func mergeDefaults() {
+        let existing = Dictionary(sources.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var merged: [BlocklistSource] = catalog.map { entry in
+            if var prior = existing[entry.id], !prior.isCustom {
+                prior.name = entry.name
+                prior.url = entry.url
+                prior.detail = URL(string: entry.url)?.host
+                return prior
+            }
+            return entry.asSource(enabled: entry.enabledByDefault)
+        }
+        merged.append(contentsOf: sources.filter { $0.isCustom })
+        guard merged != sources else { return }
+        sources = merged
         saveConfig()
-        applyIfActive()
     }
 
     // MARK: License
@@ -397,8 +411,10 @@ final class AppState: ObservableObject {
         return nil
     }
 
+    /// Removes a custom (URL-added) list. Default lists can't be removed — they're
+    /// always present and toggled on/off instead.
     func removeSource(id: String) {
-        guard let index = sources.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = sources.firstIndex(where: { $0.id == id }), sources[index].isCustom else { return }
         store.deleteCache(sourceID: id)
         sources.remove(at: index)
         saveConfig()
