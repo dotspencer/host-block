@@ -36,18 +36,36 @@ Edit `Sources/HostBlock/AppState.swift`:
 - `AppConstants.gumroadProductID` — the `product_id` of your Gumroad product
   (enable "Generate a unique license key per sale" on the product)
 - `AppConstants.purchaseURL` — your product page, linked from the activation modal
+- `AppConstants.decrementEndpoint` — URL of your license-decrement Worker (see
+  below). Leave the placeholder to disable that call.
 
 Set the product up as a single product with two variants, pricing the Personal
 variant at $0. The app detects the tier from the variant name: any variant
-containing **"Family"** is treated as a Family license; everything else is
-Personal.
+containing **"Pro"** is treated as a Pro license; everything else is Personal.
+("Family" is also accepted as a legacy alias for keys sold under the old name.)
 
 Device limiting for Personal licenses uses Gumroad's license "uses" counter:
-activation increments it, and a count above 1 is rejected. A reinstall on the
-same machine also increments the counter, so a legitimate user who reinstalls
-may need their uses count reset from the Gumroad dashboard (Sales → license key).
-Daily/launch revalidation does not increment the counter; refunded or disputed
-purchases deactivate the app on next launch.
+activation increments it (`increment_uses_count=true`), and a count above 1 is
+rejected. Removing a license POSTs the key to the decrement Worker, which frees
+the slot so the same key can be re-added on the same device. This is best-effort
+— the license is removed locally regardless, so an offline or unconfigured
+decrement just leaves the count for a manual reset from the Gumroad dashboard
+(Sales → license key). Daily/launch revalidation does not touch the counter;
+refunded or disputed purchases deactivate the app on next launch.
+
+### The decrement Worker
+
+`decrement_uses_count` is an authenticated Gumroad endpoint, so it needs your
+**seller access token** — a token that can enable/disable/decrement any of your
+licenses. Embedding it in the distributed app would ship that token to every
+user, so instead it lives in a small Cloudflare Worker under
+[`server/license-decrement`](server/license-decrement). The app POSTs only a
+license key to the Worker's URL; the token stays server-side. The Worker verifies
+the key against your product before decrementing, so a public URL can't be used
+to decrement arbitrary strings. See that folder's README for one-command deploy
+(`wrangler deploy`) and setup. Until you set `AppConstants.decrementEndpoint` to
+the deployed URL, removal still works locally and only the automatic slot-freeing
+is skipped.
 
 ## How the privileged setup works
 

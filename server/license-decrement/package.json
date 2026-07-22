@@ -1,0 +1,8 @@
+{
+  "name": "hostblock-license-decrement",
+  "private": true,
+  "scripts": {
+    "dev": "bunx wrangler dev",
+    "deploy": "bunx wrangler deploy"
+  }
+}

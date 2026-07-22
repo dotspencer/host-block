@@ -24,6 +24,7 @@ public struct ConfigStore {
     public var stagingFileURL: URL { baseDir.appendingPathComponent("hosts_block.txt") }
     private var configURL: URL { baseDir.appendingPathComponent("config.json") }
     private var licenseURL: URL { baseDir.appendingPathComponent("license.json") }
+    private var catalogURL: URL { baseDir.appendingPathComponent("catalog.json") }
 
     // MARK: Config
 
@@ -51,6 +52,18 @@ public struct ConfigStore {
 
     public func deleteLicense() {
         try? FileManager.default.removeItem(at: licenseURL)
+    }
+
+    // MARK: Catalog cache
+
+    public func loadCatalog() -> [CatalogEntry]? {
+        guard let data = try? Data(contentsOf: catalogURL) else { return nil }
+        return try? decoder.decode([CatalogEntry].self, from: data)
+    }
+
+    public func saveCatalog(_ catalog: [CatalogEntry]) {
+        guard let data = try? encoder.encode(catalog) else { return }
+        try? data.write(to: catalogURL, options: .atomic)
     }
 
     // MARK: Blocklist caches (one plain-text domain per line)

@@ -3,12 +3,23 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Single source of truth for the app version. The footer reads this back from
+# Info.plist at runtime via CFBundleShortVersionString.
+VERSION="1.0.0"
+BUILD="1"
+
 swift build -c release
 
 APP="dist/HostBlock.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/HostBlock "$APP/Contents/MacOS/HostBlock"
+
+# Copy SwiftPM resource bundles (e.g. HostBlock_HostBlockCore.bundle holding
+# catalog-fallback.json) so Bundle.module resolves them from Contents/Resources.
+for bundle in .build/release/*.bundle; do
+    [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
+done
 
 cat > "$APP/Contents/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
