@@ -43,50 +43,5 @@
     "category": "malware",
     "domainCount": 152000,
     "featured": false
-  },
-  {
-    "id": "no-google",
-    "name": "No Google",
-    "description": "Blocks Google's tracking and services across its domains. Aggressive — expect Google sign-in, Search, and other Google sites to break.",
-    "url": "https://raw.githubusercontent.com/nickspaargaren/no-google/master/pihole-google.txt",
-    "category": "trackers",
-    "domainCount": 6800,
-    "featured": false
-  },
-  {
-    "id": "no-facebook",
-    "name": "No Facebook & Instagram",
-    "description": "Blocks Meta's Facebook, Instagram, and their tracking domains.",
-    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/facebook.txt",
-    "category": "social",
-    "domainCount": 22000,
-    "featured": false
-  },
-  {
-    "id": "no-tiktok",
-    "name": "No TikTok",
-    "description": "Blocks TikTok and its tracking domains.",
-    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/tiktok.txt",
-    "category": "social",
-    "domainCount": 3700,
-    "featured": false
-  },
-  {
-    "id": "gambling",
-    "name": "Gambling",
-    "description": "Blocks online gambling and betting sites.",
-    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/gambling.txt",
-    "category": "gambling",
-    "domainCount": 342000,
-    "featured": false
-  },
-  {
-    "id": "cryptomining",
-    "name": "Cryptomining",
-    "description": "Blocks cryptocurrency miners and mining pools.",
-    "url": "https://raw.githubusercontent.com/blocklistproject/Lists/master/crypto.txt",
-    "category": "malware",
-    "domainCount": 1300,
-    "featured": false
   }
 ]

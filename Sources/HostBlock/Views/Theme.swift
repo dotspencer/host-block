@@ -33,8 +33,6 @@ enum Theme {
         case .malware: return Color(red: 0.94, green: 0.35, blue: 0.35)  // red
         case .privacy: return Color(red: 0.23, green: 0.51, blue: 0.96)  // blue
         case .adult: return Color(red: 0.93, green: 0.38, blue: 0.60)    // pink
-        case .gambling: return Color(red: 0.16, green: 0.72, blue: 0.60) // teal
-        case .social: return Color(red: 0.29, green: 0.70, blue: 0.86)   // cyan
         case .custom: return Color.white.opacity(0.45)                   // gray
         }
     }

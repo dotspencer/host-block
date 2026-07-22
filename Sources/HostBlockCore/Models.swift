@@ -104,17 +104,13 @@ public enum ListCategory: String, Codable, Sendable, CaseIterable {
     case malware
     case privacy
     case adult
-    case gambling
-    case social
     case custom
 
     public var label: String { rawValue.uppercased() }
 
     /// The categories offered as filters in the Browse catalog (custom lists never
     /// appear there — they come from user-supplied URLs).
-    public static var browsable: [ListCategory] {
-        [.ads, .trackers, .malware, .privacy, .adult, .gambling, .social]
-    }
+    public static var browsable: [ListCategory] { [.ads, .trackers, .malware, .privacy, .adult] }
 }
 
 // MARK: - Installed blocklists
