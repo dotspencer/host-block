@@ -7,13 +7,21 @@ struct BrowseTabView: View {
     @State private var filter: ListCategory?
 
     private var results: [CatalogEntry] {
-        state.catalog.filter { entry in
+        let matches = state.catalog.filter { entry in
             let matchesCategory = filter == nil || entry.category == filter
             let matchesSearch = search.isEmpty
                 || entry.name.localizedCaseInsensitiveContains(search)
                 || entry.description.localizedCaseInsensitiveContains(search)
             return matchesCategory && matchesSearch
         }
+        // Featured first, preserving each group's original catalog order.
+        return matches.enumerated()
+            .sorted { lhs, rhs in
+                lhs.element.featured != rhs.element.featured
+                    ? lhs.element.featured
+                    : lhs.offset < rhs.offset
+            }
+            .map(\.element)
     }
 
     var body: some View {

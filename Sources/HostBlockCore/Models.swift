@@ -104,13 +104,17 @@ public enum ListCategory: String, Codable, Sendable, CaseIterable {
     case malware
     case privacy
     case adult
+    case gambling
+    case social
     case custom
 
     public var label: String { rawValue.uppercased() }
 
     /// The categories offered as filters in the Browse catalog (custom lists never
     /// appear there — they come from user-supplied URLs).
-    public static var browsable: [ListCategory] { [.ads, .trackers, .malware, .privacy, .adult] }
+    public static var browsable: [ListCategory] {
+        [.ads, .trackers, .malware, .privacy, .adult, .gambling, .social]
+    }
 }
 
 // MARK: - Installed blocklists
@@ -167,12 +171,12 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
 }
 
 public enum DefaultLists {
-    /// Seeded on a fresh install so the app isn't empty. Matches the Browse catalog's
-    /// stable ids so those entries read as "Added". Counts are advertised estimates
-    /// that get replaced by real values after the first fetch.
+    /// Seeded on a fresh install so the app isn't empty: OISD Big, the recommended
+    /// all-in-one, enabled by default. The sysadmin adds NSFW/others from Browse as
+    /// needed. Ids match the catalog so a seeded list reads as "Added" there.
     public static var seed: [BlocklistSource] {
         Catalog.bundled
-            .filter { ["adguard-dns", "stevenblack-unified", "malware-domains", "oisd-small"].contains($0.id) }
+            .filter { ["oisd-big"].contains($0.id) }
             .map { $0.asSource(enabled: true) }
     }
 }
