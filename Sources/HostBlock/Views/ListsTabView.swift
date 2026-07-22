@@ -9,16 +9,25 @@ struct ListsTabView: View {
     @State private var addError: String?
     @State private var hoveredID: String?
 
+    private var defaultSources: [BlocklistSource] { state.sources.filter { !$0.isCustom } }
+    private var customSources: [BlocklistSource] { state.sources.filter { $0.isCustom } }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("ACTIVE BLOCKLISTS").sectionHeader()
-                    ForEach(state.sources) { source in
-                        row(source)
+                    if !defaultSources.isEmpty {
+                        Text("DEFAULT LISTS").sectionHeader()
+                        ForEach(defaultSources) { row($0) }
+                    }
+                    if !customSources.isEmpty {
+                        Text("CUSTOM LISTS")
+                            .sectionHeader()
+                            .padding(.top, defaultSources.isEmpty ? 0 : 4)
+                        ForEach(customSources) { row($0) }
                     }
                     if state.sources.isEmpty {
-                        Text("No lists yet. Add one from Browse or paste a URL below.")
+                        Text("No lists yet. Add one from Browse or below.")
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -77,12 +86,9 @@ struct ListsTabView: View {
             .toggleStyle(GreenToggleStyle())
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 7) {
-                    Text(source.name)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    CategoryBadge(category: source.category)
-                }
+                Text(source.name)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text("\(Theme.abbreviate(source.domainCount)) domains · \(Theme.relativeAge(source.lastFetched))")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
@@ -94,7 +100,7 @@ struct ListsTabView: View {
             Button(action: { state.removeSource(id: source.id) }) {
                 Image(systemName: "trash")
                     .font(.system(size: 12))
-                    .foregroundStyle(Theme.color(for: .malware))
+                    .foregroundStyle(Theme.danger)
             }
             .buttonStyle(.plain)
             .help("Remove \(source.name)")
@@ -126,7 +132,7 @@ struct ListsTabView: View {
     @ViewBuilder
     private var customSection: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("CUSTOM LIST").sectionHeader()
+            Text("ADD CUSTOM LIST").sectionHeader()
             if addingCustom {
                 TextField("List name (optional)", text: $customName)
                     .textFieldStyle(.plain)
@@ -161,7 +167,7 @@ struct ListsTabView: View {
                 }
 
                 if let addError {
-                    Text(addError).font(.system(size: 11)).foregroundStyle(Theme.color(for: .malware))
+                    Text(addError).font(.system(size: 11)).foregroundStyle(Theme.danger)
                 }
 
                 Label("Supports hosts files, domain lists, GitHub Gists", systemImage: "link")

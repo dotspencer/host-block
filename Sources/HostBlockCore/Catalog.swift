@@ -6,27 +6,15 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
     public var name: String
     public var description: String
     public var url: String
-    public var category: ListCategory
     /// Advertised domain count, shown until the list is added and fetched for real.
     public var domainCount: Int
-    public var featured: Bool
 
-    public init(
-        id: String,
-        name: String,
-        description: String,
-        url: String,
-        category: ListCategory,
-        domainCount: Int,
-        featured: Bool = false
-    ) {
+    public init(id: String, name: String, description: String, url: String, domainCount: Int) {
         self.id = id
         self.name = name
         self.description = description
         self.url = url
-        self.category = category
         self.domainCount = domainCount
-        self.featured = featured
     }
 
     public init(from decoder: Decoder) throws {
@@ -35,9 +23,7 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
         name = try c.decode(String.self, forKey: .name)
         description = try c.decodeIfPresent(String.self, forKey: .description) ?? ""
         url = try c.decode(String.self, forKey: .url)
-        category = try c.decodeIfPresent(ListCategory.self, forKey: .category) ?? .privacy
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
-        featured = try c.decodeIfPresent(Bool.self, forKey: .featured) ?? false
     }
 
     public func asSource(enabled: Bool) -> BlocklistSource {
@@ -46,7 +32,6 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
             name: name,
             detail: URL(string: url)?.host,
             url: url,
-            category: category,
             enabled: enabled,
             domainCount: domainCount
         )

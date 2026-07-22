@@ -47,13 +47,11 @@ enum AppConstants {
 
 enum Tab: String, CaseIterable {
     case lists
-    case browse
     case license
 
     var title: String {
         switch self {
         case .lists: return "Lists"
-        case .browse: return "Browse"
         case .license: return "License"
         }
     }
@@ -61,12 +59,11 @@ enum Tab: String, CaseIterable {
     var icon: String {
         switch self {
         case .lists: return "list.bullet"
-        case .browse: return "magnifyingglass"
         case .license: return "key"
         }
     }
 
-    /// Lists and Browse require an active license; License is always reachable.
+    /// Lists requires an active license; License is always reachable.
     var requiresLicense: Bool { self != .license }
 }
 
@@ -122,7 +119,7 @@ final class AppState: ObservableObject {
         bootstrapped = true
 
         if let config = store.loadConfig() {
-            sources = Self.migrateCategories(config.sources)
+            sources = config.sources
             protectionEnabled = config.protectionEnabled
             lastUpdated = config.lastUpdated
             blockedCount = config.blockedCount
@@ -147,19 +144,6 @@ final class AppState: ObservableObject {
         }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
             Task { @MainActor in AppState.shared.refreshIfStale() }
-        }
-    }
-
-    /// Configs written before categories existed decode every list as `.custom`.
-    /// Recover the real category for any such list whose URL is in the catalog, so
-    /// upgraders don't see everything badged CUSTOM.
-    private static func migrateCategories(_ sources: [BlocklistSource]) -> [BlocklistSource] {
-        let byURL = Dictionary(Catalog.bundled.map { ($0.url, $0.category) }, uniquingKeysWith: { first, _ in first })
-        return sources.map { source in
-            guard source.category == .custom, let category = byURL[source.url] else { return source }
-            var updated = source
-            updated.category = category
-            return updated
         }
     }
 

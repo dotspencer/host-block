@@ -23,7 +23,7 @@ struct LicenseTabView: View {
             if let error = state.deactivationError {
                 Text(error)
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.color(for: .malware))
+                    .foregroundStyle(Theme.danger)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -177,7 +177,7 @@ struct LicenseTabView: View {
             if let error = state.activationError {
                 Text(error)
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.color(for: .malware))
+                    .foregroundStyle(Theme.danger)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }

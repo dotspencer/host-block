@@ -122,13 +122,13 @@ final class ModelDecodingTests: XCTestCase {
         """
         let source = try JSONDecoder().decode(BlocklistSource.self, from: Data(json.utf8))
         XCTAssertEqual(source.id, "oisd-big")
-        XCTAssertEqual(source.category, .custom)
         XCTAssertEqual(source.domainCount, 0)
         XCTAssertNil(source.lastFetched)
         XCTAssertTrue(source.enabled)
     }
 
     func testCatalogEntryDecodesAndConvertsToSource() throws {
+        // Older/extra keys (category, featured) are tolerated and ignored.
         let json = """
         [{"id":"easylist","name":"EasyList","description":"Ads.",
           "url":"https://easylist.to/easylist/easylist.txt","category":"ads",
@@ -137,7 +137,6 @@ final class ModelDecodingTests: XCTestCase {
         let entries = try JSONDecoder().decode([CatalogEntry].self, from: Data(json.utf8))
         XCTAssertEqual(entries.count, 1)
         let source = entries[0].asSource(enabled: true)
-        XCTAssertEqual(source.category, .ads)
         XCTAssertEqual(source.domainCount, 84000)
         XCTAssertEqual(source.detail, "easylist.to")
     }
@@ -153,7 +152,7 @@ final class ModelDecodingTests: XCTestCase {
     /// `Catalog.bundled` returns empty and this fails loudly rather than shipping broken.
     func testBundledCatalogLoadsFromResource() {
         XCTAssertEqual(Catalog.bundled.count, 4)
-        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.featured })
+        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" })
     }
 
     func testCatalogDecodesWrapperShape() throws {

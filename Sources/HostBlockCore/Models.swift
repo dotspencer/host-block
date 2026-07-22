@@ -96,23 +96,6 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
     }
 }
 
-// MARK: - Categories
-
-public enum ListCategory: String, Codable, Sendable, CaseIterable {
-    case ads
-    case trackers
-    case malware
-    case privacy
-    case adult
-    case custom
-
-    public var label: String { rawValue.uppercased() }
-
-    /// The categories offered as filters in the Browse catalog (custom lists never
-    /// appear there — they come from user-supplied URLs).
-    public static var browsable: [ListCategory] { [.ads, .trackers, .malware, .privacy, .adult] }
-}
-
 // MARK: - Installed blocklists
 
 public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
@@ -120,21 +103,20 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     public var name: String
     public var detail: String?
     public var url: String
-    public var category: ListCategory
     public var enabled: Bool
+    /// User-added by URL (vs. a catalog "default" list). Groups the Lists tab.
+    public var isCustom: Bool
     /// Domains found in this list on its last successful fetch (advertised estimate until then).
     public var domainCount: Int
     public var lastFetched: Date?
-
-    public var isCustom: Bool { category == .custom }
 
     public init(
         id: String,
         name: String,
         detail: String? = nil,
         url: String,
-        category: ListCategory,
         enabled: Bool,
+        isCustom: Bool = false,
         domainCount: Int = 0,
         lastFetched: Date? = nil
     ) {
@@ -142,27 +124,41 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
         self.name = name
         self.detail = detail
         self.url = url
-        self.category = category
         self.enabled = enabled
+        self.isCustom = isCustom
         self.domainCount = domainCount
         self.lastFetched = lastFetched
     }
 
-    /// Lenient decoding so configs written before categories/counts existed still load.
+    /// Lenient decoding so older configs still load. `isCustom` falls back to the
+    /// legacy `category == "custom"` marker used before this flag existed.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         detail = try c.decodeIfPresent(String.self, forKey: .detail)
         url = try c.decode(String.self, forKey: .url)
-        category = try c.decodeIfPresent(ListCategory.self, forKey: .category) ?? .custom
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
         lastFetched = try c.decodeIfPresent(Date.self, forKey: .lastFetched)
+        if let flag = try c.decodeIfPresent(Bool.self, forKey: .isCustom) {
+            isCustom = flag
+        } else {
+            let legacy = try decoder.container(keyedBy: LegacyKey.self)
+            isCustom = (try legacy.decodeIfPresent(String.self, forKey: LegacyKey("category"))) == "custom"
+        }
+    }
+
+    private struct LegacyKey: CodingKey {
+        var stringValue: String
+        var intValue: Int? { nil }
+        init(_ s: String) { stringValue = s }
+        init?(stringValue: String) { self.stringValue = stringValue }
+        init?(intValue: Int) { nil }
     }
 
     public static func custom(id: String = UUID().uuidString, name: String, url: String, host: String?) -> BlocklistSource {
-        BlocklistSource(id: id, name: name, detail: host, url: url, category: .custom, enabled: true)
+        BlocklistSource(id: id, name: name, detail: host, url: url, enabled: true, isCustom: true)
     }
 }
 
