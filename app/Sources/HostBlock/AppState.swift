@@ -37,6 +37,9 @@ enum AppConstants {
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!
     static let catalogURL = "https://hostblock.app/catalog.json"
+    /// Update feed (latest.json on R2). Compared to the running version to surface an
+    /// "Update available" link — a lightweight check, not a Sparkle-style auto-updater.
+    static let updateFeedURL = "https://updates.hostblock.app/releases/latest.json"
     /// The shipped version, read from the bundle's Info.plist (CFBundleShortVersionString)
     /// so the footer always matches what was actually built. Falls back for `swift run`.
     static let appVersion: String = {
@@ -89,6 +92,8 @@ final class AppState: ObservableObject {
     @Published private(set) var deactivationError: String?
     /// Lists whose most recent update attempt failed to download (shown per-row).
     @Published private(set) var failedListIDs: Set<String> = []
+    /// A newer app version advertised by the update feed, if any (footer "Update" link).
+    @Published private(set) var availableUpdate: UpdateManifest?
     @Published var selectedTab: Tab = .lists
 
     private let store: ConfigStore
@@ -150,6 +155,22 @@ final class AppState: ObservableObject {
         }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
             Task { @MainActor in AppState.shared.refreshIfStale() }
+        }
+    }
+
+    /// Fires a fresh update check, e.g. when the menu opens. Unthrottled on purpose:
+    /// it's a tiny static JSON GET against R2 (free egress), so per-open is fine.
+    func checkForUpdatesOnDemand() {
+        Task { await checkForUpdate() }
+    }
+
+    /// Asks the update feed whether a newer version exists and, if so, publishes it so
+    /// the footer can offer the download. Silent on every failure (see UpdateChecker).
+    private func checkForUpdate() async {
+        guard !demoMode else { return }
+        let checker = UpdateChecker(feedURL: AppConstants.updateFeedURL, currentVersion: AppConstants.appVersion)
+        if let manifest = await checker.check() {
+            availableUpdate = manifest
         }
     }
 

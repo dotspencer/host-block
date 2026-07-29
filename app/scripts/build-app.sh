@@ -5,10 +5,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="1.0.0"
+VERSION="1.0.3"
 BUILD="1"
 IDENTITY="Developer ID Application: Spencer Smith (BVXWVLHLQJ)"
 NOTARY_PROFILE="hostblock notarization"
+# Public base URL of the R2 releases folder (where the DMG is uploaded).
+RELEASE_URL_BASE="https://updates.hostblock.app/releases"
 
 RELEASE=0
 [[ "${1:-}" == "--release" ]] && RELEASE=1
@@ -88,8 +90,22 @@ echo "==> Notarizing the DMG"
 xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 
+echo "==> Writing update feed (latest.json)"
+# The app polls this to offer an "Update available" link. It lives alongside the DMG
+# under releases/ (served at $RELEASE_URL_BASE/latest.json).
+cat > dist/latest.json <<EOF
+{
+  "version": "$VERSION",
+  "url": "$RELEASE_URL_BASE/HostBlock-$VERSION.dmg"
+}
+EOF
+
 echo "==> Gatekeeper verification"
 spctl -a -vvv "$APP" || true
 spctl -a -t open --context context:primary-signature -vv "$DMG" || true
 
+echo
 echo "Release built + notarized: $DMG"
+echo "Upload both to the 'hostblock' R2 bucket under releases/:"
+echo "  • $(basename "$DMG")"
+echo "  • latest.json"

@@ -22,6 +22,9 @@ struct MenuView: View {
         .frame(width: Theme.panelWidth)
         .background(Theme.background)
         .environment(\.colorScheme, .dark)
+        // Re-check for updates each time the menu opens, so the footer reflects a
+        // just-published release without waiting for the 30-min timer.
+        .onAppear { state.checkForUpdatesOnDemand() }
     }
 
     // MARK: Header
@@ -129,6 +132,20 @@ struct MenuView: View {
             Text("v\(AppConstants.appVersion)")
                 .font(Theme.font(11, mono: true))
                 .foregroundStyle(Theme.textTertiary)
+            if let update = state.availableUpdate, let url = URL(string: update.url) {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.circle.fill")
+                        Text("Update to v\(update.version)")
+                    }
+                    .font(Theme.font(11, weight: .medium))
+                    .foregroundStyle(Theme.accent)
+                }
+                .buttonStyle(.plain)
+                .help("Download HostBlock \(update.version)")
+            }
             Spacer()
             Button("Preferences") { WindowManager.shared.showPreferences() }
                 .buttonStyle(.plain)

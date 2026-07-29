@@ -109,6 +109,26 @@ final class LicenseTierTests: XCTestCase {
     }
 }
 
+final class UpdateCheckerTests: XCTestCase {
+    func testIsNewerNumericAware() {
+        XCTAssertTrue(UpdateChecker.isNewer("1.1.0", than: "1.0.0"))
+        XCTAssertTrue(UpdateChecker.isNewer("1.0.10", than: "1.0.9"))  // numeric, not lexical
+        XCTAssertTrue(UpdateChecker.isNewer("2.0.0", than: "1.9.9"))
+        XCTAssertFalse(UpdateChecker.isNewer("1.0.0", than: "1.0.0"))  // same is not newer
+        XCTAssertFalse(UpdateChecker.isNewer("0.9.0", than: "1.0.0"))
+        XCTAssertFalse(UpdateChecker.isNewer("1.0.0", than: "dev"))    // dev build never nags
+    }
+
+    func testManifestDecodes() throws {
+        let json = """
+        {"version":"1.2.0","url":"https://updates.hostblock.app/releases/HostBlock-1.2.0.dmg"}
+        """
+        let m = try JSONDecoder().decode(UpdateManifest.self, from: Data(json.utf8))
+        XCTAssertEqual(m.version, "1.2.0")
+        XCTAssertNil(m.notes)
+    }
+}
+
 final class ModelDecodingTests: XCTestCase {
     /// A config written by the pre-redesign app (isBuiltIn, no category/counts) must
     /// still decode, defaulting missing fields rather than throwing.
