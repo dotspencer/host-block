@@ -97,16 +97,13 @@ final class LicenseTierTests: XCTestCase {
     func testTierDetection() {
         XCTAssertEqual(LicenseTier.detect(variants: "(Pro)"), .pro)
         XCTAssertEqual(LicenseTier.detect(variants: "Pro License"), .pro)
-        // "Family" is accepted as a legacy alias for the paid tier.
-        XCTAssertEqual(LicenseTier.detect(variants: "(Family)"), .pro)
         XCTAssertEqual(LicenseTier.detect(variants: "(Personal)"), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: nil), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: ""), .personal)
     }
 
-    func testTierDecodesLegacyFamily() throws {
+    func testTierCodableRoundTrips() throws {
         let decoder = JSONDecoder()
-        XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"family\"".utf8)), .pro)
         XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"pro\"".utf8)), .pro)
         XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"personal\"".utf8)), .personal)
     }

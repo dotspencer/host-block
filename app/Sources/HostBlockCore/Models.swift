@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - License
 
-public enum LicenseTier: String, Sendable {
+public enum LicenseTier: String, Codable, Sendable {
     case personal
     case pro
 
@@ -21,27 +21,9 @@ public enum LicenseTier: String, Sendable {
     }
 
     /// Gumroad reports the purchased variant as a string like "(Pro)". Any variant
-    /// naming the paid tier maps to `.pro`; everything else is Personal. "Family" is
-    /// accepted as a legacy alias so licenses sold under the old name still validate.
+    /// naming the paid tier maps to `.pro`; everything else is Personal.
     public static func detect(variants: String?) -> LicenseTier {
-        let value = (variants ?? "").lowercased()
-        return (value.contains("pro") || value.contains("family")) ? .pro : .personal
-    }
-}
-
-/// Decoded leniently so licenses saved under the old "family" tier still load as Pro.
-extension LicenseTier: Codable {
-    public init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self).lowercased()
-        switch raw {
-        case "pro", "family": self = .pro
-        default: self = .personal
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
+        (variants ?? "").lowercased().contains("pro") ? .pro : .personal
     }
 }
 
