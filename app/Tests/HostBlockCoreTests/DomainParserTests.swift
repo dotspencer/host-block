@@ -97,16 +97,13 @@ final class LicenseTierTests: XCTestCase {
     func testTierDetection() {
         XCTAssertEqual(LicenseTier.detect(variants: "(Pro)"), .pro)
         XCTAssertEqual(LicenseTier.detect(variants: "Pro License"), .pro)
-        // "Family" is accepted as a legacy alias for the paid tier.
-        XCTAssertEqual(LicenseTier.detect(variants: "(Family)"), .pro)
         XCTAssertEqual(LicenseTier.detect(variants: "(Personal)"), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: nil), .personal)
         XCTAssertEqual(LicenseTier.detect(variants: ""), .personal)
     }
 
-    func testTierDecodesLegacyFamily() throws {
+    func testTierCodableRoundTrips() throws {
         let decoder = JSONDecoder()
-        XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"family\"".utf8)), .pro)
         XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"pro\"".utf8)), .pro)
         XCTAssertEqual(try decoder.decode(LicenseTier.self, from: Data("\"personal\"".utf8)), .personal)
     }
@@ -122,13 +119,13 @@ final class ModelDecodingTests: XCTestCase {
         """
         let source = try JSONDecoder().decode(BlocklistSource.self, from: Data(json.utf8))
         XCTAssertEqual(source.id, "oisd-big")
-        XCTAssertEqual(source.category, .custom)
         XCTAssertEqual(source.domainCount, 0)
         XCTAssertNil(source.lastFetched)
         XCTAssertTrue(source.enabled)
     }
 
     func testCatalogEntryDecodesAndConvertsToSource() throws {
+        // Older/extra keys (category, featured) are tolerated and ignored.
         let json = """
         [{"id":"easylist","name":"EasyList","description":"Ads.",
           "url":"https://easylist.to/easylist/easylist.txt","category":"ads",
@@ -137,23 +134,15 @@ final class ModelDecodingTests: XCTestCase {
         let entries = try JSONDecoder().decode([CatalogEntry].self, from: Data(json.utf8))
         XCTAssertEqual(entries.count, 1)
         let source = entries[0].asSource(enabled: true)
-        XCTAssertEqual(source.category, .ads)
         XCTAssertEqual(source.domainCount, 84000)
         XCTAssertEqual(source.detail, "easylist.to")
-    }
-
-    func testBundledCatalogCoversSeedIDs() {
-        let catalogIDs = Set(Catalog.bundled.map(\.id))
-        for source in DefaultLists.seed {
-            XCTAssertTrue(catalogIDs.contains(source.id), "seed \(source.id) missing from catalog")
-        }
     }
 
     /// Guards the JSON resource: if catalog-fallback.json is unbundled or malformed,
     /// `Catalog.bundled` returns empty and this fails loudly rather than shipping broken.
     func testBundledCatalogLoadsFromResource() {
         XCTAssertEqual(Catalog.bundled.count, 4)
-        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.featured })
+        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.enabledByDefault })
     }
 
     func testCatalogDecodesWrapperShape() throws {
@@ -162,5 +151,35 @@ final class ModelDecodingTests: XCTestCase {
         """
         let entries = try Catalog.decode(Data(json.utf8))
         XCTAssertEqual(entries.first?.id, "x")
+    }
+}
+
+final class HostsBuilderTests: XCTestCase {
+    func testBuildsDedupedSortedStagingFromCache() async throws {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let cacheDir = tmp.appendingPathComponent("cache")
+        try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        try "b.example.com\na.example.com\n".write(to: cacheDir.appendingPathComponent("l1.txt"), atomically: true, encoding: .utf8)
+        try "b.example.com\nc.example.com\n".write(to: cacheDir.appendingPathComponent("l2.txt"), atomically: true, encoding: .utf8)
+
+        let staging = tmp.appendingPathComponent("hosts_block.txt")
+        let builder = HostsBuilder(cacheDir: cacheDir, stagingURL: staging)
+        let result = await builder.build(
+            lists: [
+                .init(id: "l1", name: "L1", url: "https://example.test/l1"),
+                .init(id: "l2", name: "L2", url: "https://example.test/l2"),
+            ],
+            forceRefresh: false
+        )
+
+        XCTAssertTrue(result.wroteStaging)
+        XCTAssertEqual(result.total, 3)             // a, b, c — b deduped across lists
+        XCTAssertEqual(result.counts["l1"], 2)
+        XCTAssertEqual(result.counts["l2"], 2)
+        XCTAssertTrue(result.errors.isEmpty)
+        let written = try String(contentsOf: staging, encoding: .utf8)
+        XCTAssertEqual(written, "0.0.0.0 a.example.com\n0.0.0.0 b.example.com\n0.0.0.0 c.example.com\n")
     }
 }

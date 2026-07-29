@@ -1,32 +1,23 @@
 import Foundation
 
-/// One entry in the curated Browse catalog.
+/// One built-in "default" list. The catalog defines the set every user always has.
 public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
     public var description: String
     public var url: String
-    public var category: ListCategory
-    /// Advertised domain count, shown until the list is added and fetched for real.
+    /// Advertised domain count, shown until the list is fetched for real.
     public var domainCount: Int
-    public var featured: Bool
+    /// Whether this list is on by default when it first appears for a user.
+    public var enabledByDefault: Bool
 
-    public init(
-        id: String,
-        name: String,
-        description: String,
-        url: String,
-        category: ListCategory,
-        domainCount: Int,
-        featured: Bool = false
-    ) {
+    public init(id: String, name: String, description: String, url: String, domainCount: Int, enabledByDefault: Bool = false) {
         self.id = id
         self.name = name
         self.description = description
         self.url = url
-        self.category = category
         self.domainCount = domainCount
-        self.featured = featured
+        self.enabledByDefault = enabledByDefault
     }
 
     public init(from decoder: Decoder) throws {
@@ -35,9 +26,8 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
         name = try c.decode(String.self, forKey: .name)
         description = try c.decodeIfPresent(String.self, forKey: .description) ?? ""
         url = try c.decode(String.self, forKey: .url)
-        category = try c.decodeIfPresent(ListCategory.self, forKey: .category) ?? .privacy
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
-        featured = try c.decodeIfPresent(Bool.self, forKey: .featured) ?? false
+        enabledByDefault = try c.decodeIfPresent(Bool.self, forKey: .enabledByDefault) ?? false
     }
 
     public func asSource(enabled: Bool) -> BlocklistSource {
@@ -46,8 +36,8 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
             name: name,
             detail: URL(string: url)?.host,
             url: url,
-            category: category,
             enabled: enabled,
+            isCustom: false,
             domainCount: domainCount
         )
     }

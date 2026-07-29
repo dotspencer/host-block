@@ -15,21 +15,12 @@ enum Theme {
 
     static let accent = Color(red: 0.29, green: 0.83, blue: 0.5)   // green
     static let info = Color(red: 0.23, green: 0.51, blue: 0.96)     // blue
+    static let danger = Color(red: 0.94, green: 0.35, blue: 0.35)  // red
+    static let warning = Color(red: 0.96, green: 0.65, blue: 0.14) // orange
 
     static let textPrimary = Color.white.opacity(0.95)
     static let textSecondary = Color.white.opacity(0.55)
     static let textTertiary = Color.white.opacity(0.35)
-
-    static func color(for category: ListCategory) -> Color {
-        switch category {
-        case .ads: return Color(red: 0.96, green: 0.65, blue: 0.14)      // orange
-        case .trackers: return Color(red: 0.66, green: 0.35, blue: 0.97) // purple
-        case .malware: return Color(red: 0.94, green: 0.35, blue: 0.35)  // red
-        case .privacy: return Color(red: 0.23, green: 0.51, blue: 0.96)  // blue
-        case .adult: return Color(red: 0.93, green: 0.38, blue: 0.60)    // pink
-        case .custom: return Color.white.opacity(0.45)                   // gray
-        }
-    }
 
     /// "48000" -> "48K", "246633" -> "246K", small values stay exact.
     static func abbreviate(_ count: Int) -> String {
@@ -50,20 +41,6 @@ enum Theme {
         if seconds < 3600 { return "\(Int(seconds / 60))m ago" }
         if seconds < 86_400 { return "\(Int(seconds / 3600))h ago" }
         return "\(Int(seconds / 86_400))d ago"
-    }
-}
-
-/// Uppercase color-coded category pill (ADS, TRACKERS, MALWARE, …).
-struct CategoryBadge: View {
-    let category: ListCategory
-    var body: some View {
-        Text(category.label)
-            .font(.system(size: 9, weight: .bold, design: .monospaced))
-            .tracking(0.5)
-            .foregroundStyle(Theme.color(for: category))
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(Theme.color(for: category).opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
     }
 }
 

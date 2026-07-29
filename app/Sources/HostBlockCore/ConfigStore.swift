@@ -66,24 +66,9 @@ public struct ConfigStore {
         try? data.write(to: catalogURL, options: .atomic)
     }
 
-    // MARK: Blocklist caches (one plain-text domain per line)
-
-    private func cacheURL(sourceID: String) -> URL {
-        cacheDir.appendingPathComponent("\(sourceID).txt")
-    }
-
-    public func readCache(sourceID: String) -> [String]? {
-        guard let text = try? String(contentsOf: cacheURL(sourceID: sourceID), encoding: .utf8) else { return nil }
-        let domains = text.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
-        return domains.isEmpty ? nil : domains
-    }
-
-    public func writeCache(sourceID: String, domains: [String]) {
-        let text = domains.joined(separator: "\n") + "\n"
-        try? text.write(to: cacheURL(sourceID: sourceID), atomically: true, encoding: .utf8)
-    }
+    // MARK: Blocklist cache (written/read by HostsBuilder; deleted here on removal)
 
     public func deleteCache(sourceID: String) {
-        try? FileManager.default.removeItem(at: cacheURL(sourceID: sourceID))
+        try? FileManager.default.removeItem(at: cacheDir.appendingPathComponent("\(sourceID).txt"))
     }
 }

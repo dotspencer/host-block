@@ -9,23 +9,32 @@ struct ListsTabView: View {
     @State private var addError: String?
     @State private var hoveredID: String?
 
+    private var defaultSources: [BlocklistSource] { state.sources.filter { !$0.isCustom } }
+    private var customSources: [BlocklistSource] { state.sources.filter { $0.isCustom } }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("ACTIVE BLOCKLISTS").sectionHeader()
-                    ForEach(state.sources) { source in
-                        row(source)
+                    if !defaultSources.isEmpty {
+                        Text("DEFAULT LISTS").sectionHeader()
+                        ForEach(defaultSources) { row($0) }
+                    }
+                    if !customSources.isEmpty {
+                        Text("CUSTOM LISTS")
+                            .sectionHeader()
+                            .padding(.top, defaultSources.isEmpty ? 0 : 4)
+                        ForEach(customSources) { row($0) }
                     }
                     if state.sources.isEmpty {
-                        Text("No lists yet. Add one from Browse or paste a URL below.")
+                        Text("No lists yet — add a custom one below.")
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 .padding(14)
             }
-            .frame(height: 264)
+            .frame(height: 300)
 
             Divider().overlay(Theme.separator)
 
@@ -35,17 +44,16 @@ struct ListsTabView: View {
             Divider().overlay(Theme.separator)
 
             Button(action: { state.updateNow() }) {
-                HStack(spacing: 7) {
+                HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(Theme.accent)
-                    Text("Update All Lists Now")
-                        .foregroundStyle(Theme.textPrimary)
+                    Text("Update all lists now")
                 }
                 .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 11)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 7))
-                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.stroke))
+                .padding(.vertical, 7)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.stroke))
                 // Spinner floats in an overlay so it stays out of the button's layout
                 // flow — toggling it doesn't re-lay-out the button content, which is
                 // what made MenuBarExtra re-anchor and shift the window a few pixels.
@@ -53,7 +61,7 @@ struct ListsTabView: View {
                     if state.isWorking {
                         ProgressView()
                             .controlSize(.small)
-                            .padding(.trailing, 11)
+                            .padding(.trailing, 10)
                     }
                 }
             }
@@ -67,7 +75,8 @@ struct ListsTabView: View {
     // MARK: Row
 
     private func row(_ source: BlocklistSource) -> some View {
-        let hovered = hoveredID == source.id
+        // Only custom lists get the hover-reveal trash; default lists can't be removed.
+        let hovered = source.isCustom && hoveredID == source.id
         return HStack(alignment: .center, spacing: 11) {
             Toggle("", isOn: Binding(
                 get: { AppState.shared.source(withID: source.id)?.enabled ?? false },
@@ -75,34 +84,45 @@ struct ListsTabView: View {
             ))
             .labelsHidden()
             .toggleStyle(GreenToggleStyle())
+            // While blocking is paused, per-list toggles do nothing to the hosts file,
+            // so disable them to avoid "why isn't my list applying?" confusion.
+            .disabled(!state.protectionEnabled)
+            .opacity(state.protectionEnabled ? 1 : 0.4)
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 7) {
+                HStack(spacing: 6) {
                     Text(source.name)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
-                    CategoryBadge(category: source.category)
+                    if let url = URL(string: source.url) {
+                        Link(destination: url) {
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.info)
+                        }
+                        .help("View the raw list")
+                    }
                 }
-                Text("\(Theme.abbreviate(source.domainCount)) domains · \(Theme.relativeAge(source.lastFetched))")
+                Text(meta(source))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 7)
 
-            // Trash stays in the layout (opacity-toggled) so revealing it on hover
-            // doesn't shift the row content.
-            Button(action: { state.removeSource(id: source.id) }) {
-                Image(systemName: "trash")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.color(for: .malware))
+            if source.isCustom {
+                // Trash stays in the layout (opacity-toggled) so revealing it on hover
+                // doesn't shift the row content.
+                Button(action: { state.removeSource(id: source.id) }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.danger)
+                }
+                .buttonStyle(.plain)
+                .help("Remove \(source.name)")
+                .opacity(hovered ? 1 : 0)
+                .allowsHitTesting(hovered)
             }
-            .buttonStyle(.plain)
-            .help("Remove \(source.name)")
-            .opacity(hovered ? 1 : 0)
-            .allowsHitTesting(hovered)
         }
-        // Highlight extends slightly beyond the content so the hover band spans the
-        // row like the mockup, without moving the content.
         .background(
             RoundedRectangle(cornerRadius: 7)
                 .fill(hovered ? Theme.surface : Color.clear)
@@ -111,14 +131,18 @@ struct ListsTabView: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering in
+            guard source.isCustom else { return }
             if hovering { hoveredID = source.id }
             else if hoveredID == source.id { hoveredID = nil }
         }
-        .contextMenu {
-            Button("Remove List", role: .destructive) {
-                state.removeSource(id: source.id)
-            }
-        }
+    }
+
+    /// "48K domains · 2h ago" — the age is dropped for a list that's never been
+    /// fetched (an unhelpful "never").
+    private func meta(_ source: BlocklistSource) -> String {
+        let count = "\(Theme.abbreviate(source.domainCount)) domains"
+        guard let fetched = source.lastFetched else { return count }
+        return "\(count) · \(Theme.relativeAge(fetched))"
     }
 
     // MARK: Custom list
@@ -126,7 +150,7 @@ struct ListsTabView: View {
     @ViewBuilder
     private var customSection: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("CUSTOM LIST").sectionHeader()
+            Text("ADD CUSTOM LIST").sectionHeader()
             if addingCustom {
                 TextField("List name (optional)", text: $customName)
                     .textFieldStyle(.plain)
@@ -161,7 +185,7 @@ struct ListsTabView: View {
                 }
 
                 if let addError {
-                    Text(addError).font(.system(size: 11)).foregroundStyle(Theme.color(for: .malware))
+                    Text(addError).font(.system(size: 11)).foregroundStyle(Theme.danger)
                 }
 
                 Label("Supports hosts files, domain lists, GitHub Gists", systemImage: "link")

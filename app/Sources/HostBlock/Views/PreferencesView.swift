@@ -31,7 +31,7 @@ struct PreferencesView: View {
 
             HStack(spacing: 9) {
                 Image(systemName: state.helperInstalled ? "checkmark.shield.fill" : "exclamationmark.shield")
-                    .foregroundStyle(state.helperInstalled ? Theme.accent : Theme.color(for: .ads))
+                    .foregroundStyle(state.helperInstalled ? Theme.accent : Theme.warning)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(state.helperInstalled ? "Helper installed" : "Setup required")
                         .foregroundStyle(Theme.textPrimary)

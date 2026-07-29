@@ -47,13 +47,11 @@ enum AppConstants {
 
 enum Tab: String, CaseIterable {
     case lists
-    case browse
     case license
 
     var title: String {
         switch self {
         case .lists: return "Lists"
-        case .browse: return "Browse"
         case .license: return "License"
         }
     }
@@ -61,12 +59,11 @@ enum Tab: String, CaseIterable {
     var icon: String {
         switch self {
         case .lists: return "list.bullet"
-        case .browse: return "magnifyingglass"
         case .license: return "key"
         }
     }
 
-    /// Lists and Browse require an active license; License is always reachable.
+    /// Lists requires an active license; License is always reachable.
     var requiresLicense: Bool { self != .license }
 }
 
@@ -75,7 +72,9 @@ final class AppState: ObservableObject {
     static let shared = AppState()
 
     @Published private(set) var license: LicenseInfo?
-    @Published private(set) var sources: [BlocklistSource] = DefaultLists.seed
+    @Published private(set) var sources: [BlocklistSource] = []
+    /// Definitions of the built-in "default" lists (bundled, refreshed remotely).
+    /// Merged into `sources` on launch so every user always has them.
     @Published private(set) var catalog: [CatalogEntry] = Catalog.bundled
     @Published private(set) var protectionEnabled = true
     @Published private(set) var helperInstalled = false
@@ -91,7 +90,6 @@ final class AppState: ObservableObject {
     @Published var selectedTab: Tab = .lists
 
     private let store: ConfigStore
-    private let fetcher = BlocklistFetcher()
     private let helper = PrivilegedHelper()
     private let catalogFetcher = CatalogFetcher(urlString: AppConstants.catalogURL)
     private let gumroad = GumroadClient(
@@ -100,6 +98,8 @@ final class AppState: ObservableObject {
     )
     private var refreshTimer: Timer?
     private var bootstrapped = false
+    /// Set when a toggle happens mid-apply; triggers one more apply pass (coalescing).
+    private var reapplyRequested = false
 
     /// Demo mode (HOSTBLOCK_DEMO=1) renders the UI from seeded data without any network
     /// or privileged side effects — used to screenshot the design against the mockups.
@@ -122,7 +122,7 @@ final class AppState: ObservableObject {
         bootstrapped = true
 
         if let config = store.loadConfig() {
-            sources = Self.migrateCategories(config.sources)
+            sources = config.sources
             protectionEnabled = config.protectionEnabled
             lastUpdated = config.lastUpdated
             blockedCount = config.blockedCount
@@ -132,6 +132,7 @@ final class AppState: ObservableObject {
         launchAtLogin = SMAppService.mainApp.status == .enabled
         selectedTab = license == nil ? .license : .lists
         catalog = store.loadCatalog() ?? Catalog.bundled
+        mergeDefaults()
 
         // Demo mode stops here: no Gumroad checks, list downloads, hosts writes, or timers.
         guard !demoMode else {
@@ -150,19 +151,6 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Configs written before categories existed decode every list as `.custom`.
-    /// Recover the real category for any such list whose URL is in the catalog, so
-    /// upgraders don't see everything badged CUSTOM.
-    private static func migrateCategories(_ sources: [BlocklistSource]) -> [BlocklistSource] {
-        let byURL = Dictionary(Catalog.bundled.map { ($0.url, $0.category) }, uniquingKeysWith: { first, _ in first })
-        return sources.map { source in
-            guard source.category == .custom, let category = byURL[source.url] else { return source }
-            var updated = source
-            updated.category = category
-            return updated
-        }
-    }
-
     private func saveConfig() {
         store.saveConfig(AppConfig(
             sources: sources,
@@ -172,7 +160,7 @@ final class AppState: ObservableObject {
         ))
     }
 
-    // MARK: Catalog
+    // MARK: Catalog / default lists
 
     private func refreshCatalog() async {
         do {
@@ -180,20 +168,31 @@ final class AppState: ObservableObject {
             guard !entries.isEmpty else { return }
             catalog = entries
             store.saveCatalog(entries)
+            mergeDefaults()
         } catch {
             // Keep the cached/bundled catalog when the remote one is unreachable.
         }
     }
 
-    func isInstalled(catalogID: String) -> Bool {
-        sources.contains { $0.id == catalogID }
-    }
-
-    func addFromCatalog(_ entry: CatalogEntry) {
-        guard !isInstalled(catalogID: entry.id) else { return }
-        sources.append(entry.asSource(enabled: true))
+    /// Ensures every catalog list is present in `sources` as a non-deletable default,
+    /// preserving the user's on/off choice and fetched counts. Custom (URL-added)
+    /// lists are kept as-is. Runs on launch and whenever the catalog refreshes, so a
+    /// newly-shipped default list appears (off by default) without any user action.
+    private func mergeDefaults() {
+        let existing = Dictionary(sources.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var merged: [BlocklistSource] = catalog.map { entry in
+            if var prior = existing[entry.id], !prior.isCustom {
+                prior.name = entry.name
+                prior.url = entry.url
+                prior.detail = URL(string: entry.url)?.host
+                return prior
+            }
+            return entry.asSource(enabled: entry.enabledByDefault)
+        }
+        merged.append(contentsOf: sources.filter { $0.isCustom })
+        guard merged != sources else { return }
+        sources = merged
         saveConfig()
-        applyIfActive()
     }
 
     // MARK: License
@@ -413,8 +412,10 @@ final class AppState: ObservableObject {
         return nil
     }
 
+    /// Removes a custom (URL-added) list. Default lists can't be removed — they're
+    /// always present and toggled on/off instead.
     func removeSource(id: String) {
-        guard let index = sources.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = sources.firstIndex(where: { $0.id == id }), sources[index].isCustom else { return }
         store.deleteCache(sourceID: id)
         sources.remove(at: index)
         saveConfig()
@@ -452,64 +453,57 @@ final class AppState: ObservableObject {
     }
 
     private func applyBlocklists(forceRefresh: Bool) async {
-        guard !demoMode else { return }
-        guard license != nil, helperInstalled else { return }
-        guard !isWorking else { return }
-        isWorking = true
-        lastError = nil
-        defer { isWorking = false }
-
-        var allDomains = Set<String>()
-        var sourceErrors: [String] = []
-        var counts: [String: Int] = [:]
-        for source in sources where source.enabled {
-            do {
-                let domains = try await loadDomains(for: source, forceRefresh: forceRefresh)
-                allDomains.formUnion(domains)
-                counts[source.id] = domains.count
-            } catch {
-                sourceErrors.append("\(source.name): \(error.localizedDescription)")
-            }
+        guard !demoMode, license != nil, helperInstalled else { return }
+        // Coalesce: if an apply is already running, ask for one more pass afterward so
+        // rapid toggles all take effect instead of being dropped.
+        if isWorking {
+            reapplyRequested = true
+            return
         }
+        isWorking = true
+        defer { isWorking = false }
+        var force = forceRefresh
+        repeat {
+            reapplyRequested = false
+            await performApply(forceRefresh: force)
+            force = false
+        } while reapplyRequested
+    }
+
+    private func performApply(forceRefresh: Bool) async {
+        lastError = nil
+        let lists = sources.filter(\.enabled).map { HostsBuilder.List(id: $0.id, name: $0.name, url: $0.url) }
+        let builder = HostsBuilder(cacheDir: store.cacheDir, stagingURL: store.stagingFileURL)
+
+        // Assemble domains and write the staging file OFF the main actor, so the UI
+        // (e.g. the toggle just clicked) repaints immediately instead of freezing while
+        // hundreds of thousands of domains are read, deduplicated, and sorted.
+        let result = await Task.detached(priority: .userInitiated) {
+            await builder.build(lists: lists, forceRefresh: forceRefresh)
+        }.value
 
         let now = Date()
-        for (id, count) in counts {
+        for (id, count) in result.counts {
             if let index = sources.firstIndex(where: { $0.id == id }) {
                 sources[index].domainCount = count
                 sources[index].lastFetched = now
             }
         }
-
-        let sorted = allDomains.sorted()
+        guard result.wroteStaging else {
+            lastError = "Couldn't build the block list."
+            return
+        }
         do {
-            try DomainParser.hostsLines(for: sorted)
-                .write(to: store.stagingFileURL, atomically: true, encoding: .utf8)
             try await helper.apply(stagingFile: store.stagingFileURL)
-            blockedCount = sorted.count
+            blockedCount = result.total
             lastUpdated = now
             saveConfig()
         } catch {
             lastError = error.localizedDescription
             return
         }
-        if !sourceErrors.isEmpty {
-            lastError = sourceErrors.joined(separator: "\n")
-        }
-    }
-
-    private func loadDomains(for source: BlocklistSource, forceRefresh: Bool) async throws -> [String] {
-        if !forceRefresh, let cached = store.readCache(sourceID: source.id) {
-            return cached
-        }
-        do {
-            let domains = try await fetcher.download(source)
-            store.writeCache(sourceID: source.id, domains: domains)
-            return domains
-        } catch {
-            if let cached = store.readCache(sourceID: source.id) {
-                return cached
-            }
-            throw error
+        if !result.errors.isEmpty {
+            lastError = result.errors.joined(separator: "\n")
         }
     }
 }

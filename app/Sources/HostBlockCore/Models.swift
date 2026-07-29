@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - License
 
-public enum LicenseTier: String, Sendable {
+public enum LicenseTier: String, Codable, Sendable {
     case personal
     case pro
 
@@ -21,27 +21,9 @@ public enum LicenseTier: String, Sendable {
     }
 
     /// Gumroad reports the purchased variant as a string like "(Pro)". Any variant
-    /// naming the paid tier maps to `.pro`; everything else is Personal. "Family" is
-    /// accepted as a legacy alias so licenses sold under the old name still validate.
+    /// naming the paid tier maps to `.pro`; everything else is Personal.
     public static func detect(variants: String?) -> LicenseTier {
-        let value = (variants ?? "").lowercased()
-        return (value.contains("pro") || value.contains("family")) ? .pro : .personal
-    }
-}
-
-/// Decoded leniently so licenses saved under the old "family" tier still load as Pro.
-extension LicenseTier: Codable {
-    public init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self).lowercased()
-        switch raw {
-        case "pro", "family": self = .pro
-        default: self = .personal
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
+        (variants ?? "").lowercased().contains("pro") ? .pro : .personal
     }
 }
 
@@ -96,23 +78,6 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
     }
 }
 
-// MARK: - Categories
-
-public enum ListCategory: String, Codable, Sendable, CaseIterable {
-    case ads
-    case trackers
-    case malware
-    case privacy
-    case adult
-    case custom
-
-    public var label: String { rawValue.uppercased() }
-
-    /// The categories offered as filters in the Browse catalog (custom lists never
-    /// appear there — they come from user-supplied URLs).
-    public static var browsable: [ListCategory] { [.ads, .trackers, .malware, .privacy, .adult] }
-}
-
 // MARK: - Installed blocklists
 
 public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
@@ -120,21 +85,20 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     public var name: String
     public var detail: String?
     public var url: String
-    public var category: ListCategory
     public var enabled: Bool
+    /// User-added by URL (vs. a catalog "default" list). Groups the Lists tab.
+    public var isCustom: Bool
     /// Domains found in this list on its last successful fetch (advertised estimate until then).
     public var domainCount: Int
     public var lastFetched: Date?
-
-    public var isCustom: Bool { category == .custom }
 
     public init(
         id: String,
         name: String,
         detail: String? = nil,
         url: String,
-        category: ListCategory,
         enabled: Bool,
+        isCustom: Bool = false,
         domainCount: Int = 0,
         lastFetched: Date? = nil
     ) {
@@ -142,38 +106,41 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
         self.name = name
         self.detail = detail
         self.url = url
-        self.category = category
         self.enabled = enabled
+        self.isCustom = isCustom
         self.domainCount = domainCount
         self.lastFetched = lastFetched
     }
 
-    /// Lenient decoding so configs written before categories/counts existed still load.
+    /// Lenient decoding so older configs still load. `isCustom` falls back to the
+    /// legacy `category == "custom"` marker used before this flag existed.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         detail = try c.decodeIfPresent(String.self, forKey: .detail)
         url = try c.decode(String.self, forKey: .url)
-        category = try c.decodeIfPresent(ListCategory.self, forKey: .category) ?? .custom
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
         lastFetched = try c.decodeIfPresent(Date.self, forKey: .lastFetched)
+        if let flag = try c.decodeIfPresent(Bool.self, forKey: .isCustom) {
+            isCustom = flag
+        } else {
+            let legacy = try decoder.container(keyedBy: LegacyKey.self)
+            isCustom = (try legacy.decodeIfPresent(String.self, forKey: LegacyKey("category"))) == "custom"
+        }
+    }
+
+    private struct LegacyKey: CodingKey {
+        var stringValue: String
+        var intValue: Int? { nil }
+        init(_ s: String) { stringValue = s }
+        init?(stringValue: String) { self.stringValue = stringValue }
+        init?(intValue: Int) { nil }
     }
 
     public static func custom(id: String = UUID().uuidString, name: String, url: String, host: String?) -> BlocklistSource {
-        BlocklistSource(id: id, name: name, detail: host, url: url, category: .custom, enabled: true)
-    }
-}
-
-public enum DefaultLists {
-    /// Seeded on a fresh install so the app isn't empty: OISD Big, the recommended
-    /// all-in-one, enabled by default. The sysadmin adds NSFW/others from Browse as
-    /// needed. Ids match the catalog so a seeded list reads as "Added" there.
-    public static var seed: [BlocklistSource] {
-        Catalog.bundled
-            .filter { ["oisd-big"].contains($0.id) }
-            .map { $0.asSource(enabled: true) }
+        BlocklistSource(id: id, name: name, detail: host, url: url, enabled: true, isCustom: true)
     }
 }
 
@@ -185,8 +152,10 @@ public struct AppConfig: Codable, Sendable {
     public var lastUpdated: Date?
     public var blockedCount: Int
 
+    /// Sources default to empty: the default lists are merged in from the catalog on
+    /// launch (see `AppState.mergeDefaults`), not seeded into the persisted config.
     public init(
-        sources: [BlocklistSource] = DefaultLists.seed,
+        sources: [BlocklistSource] = [],
         protectionEnabled: Bool = true,
         lastUpdated: Date? = nil,
         blockedCount: Int = 0
