@@ -1,12 +1,17 @@
 #!/bin/bash
-# Builds HostBlock.app into dist/ from the SwiftPM release build.
+# Builds HostBlock.app into dist/.
+#   (no args)  fast ad-hoc signed build for local dev / screenshots
+#   --release  Developer ID sign + hardened runtime + notarize + staple + DMG
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Single source of truth for the app version. The footer reads this back from
-# Info.plist at runtime via CFBundleShortVersionString.
 VERSION="1.0.0"
 BUILD="1"
+IDENTITY="Developer ID Application: Spencer Smith (BVXWVLHLQJ)"
+NOTARY_PROFILE="hostblock notarization"
+
+RELEASE=0
+[[ "${1:-}" == "--release" ]] && RELEASE=1
 
 swift build -c release
 
@@ -21,39 +26,70 @@ for bundle in .build/release/*.bundle; do
     [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
 
-cat > "$APP/Contents/Info.plist" <<'EOF'
+# App icon (Finder / DMG window / Get Info). Regenerate with scripts/make-icon.sh.
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key>
-    <string>HostBlock</string>
-    <key>CFBundleDisplayName</key>
-    <string>HostBlock</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.hostblock.app</string>
-    <key>CFBundleExecutable</key>
-    <string>HostBlock</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
-    <key>CFBundleVersion</key>
-    <string>1</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
+    <key>CFBundleName</key><string>HostBlock</string>
+    <key>CFBundleDisplayName</key><string>HostBlock</string>
+    <key>CFBundleIdentifier</key><string>com.hostblock.app</string>
+    <key>CFBundleExecutable</key><string>HostBlock</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$BUILD</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>LSUIElement</key><true/>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
 EOF
 
-# Ad-hoc signature so the bundle runs locally; replace with a Developer ID
-# identity (and notarization) for distribution.
-codesign --force --sign - "$APP"
+if [[ $RELEASE -eq 0 ]]; then
+    # Ad-hoc signature so the bundle runs locally without Gatekeeper fuss.
+    codesign --force --sign - "$APP"
+    echo "Built (ad-hoc, local dev): $APP"
+    exit 0
+fi
 
-echo "Built $APP"
+# ---- Release: Developer ID signing + notarization + DMG --------------------
+
+echo "==> Signing (Developer ID, hardened runtime)"
+# The SwiftPM ".bundle" is a resource-only folder (no executable), so it isn't
+# signed on its own — signing the app seals it as a resource.
+codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
+codesign --verify --strict --verbose=2 "$APP"
+
+echo "==> Notarizing the app"
+ZIP="dist/HostBlock.zip"
+ditto -c -k --keepParent "$APP" "$ZIP"
+xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+rm -f "$ZIP"
+xcrun stapler staple "$APP"
+
+echo "==> Building DMG"
+DMG="dist/HostBlock-$VERSION.dmg"
+STAGE="dist/dmg-stage"
+rm -rf "$STAGE" "$DMG"
+mkdir -p "$STAGE"
+cp -R "$APP" "$STAGE/"
+ln -s /Applications "$STAGE/Applications"
+hdiutil create -volname "HostBlock" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+rm -rf "$STAGE"
+# Sign the DMG itself (before notarizing) so Gatekeeper assessment is unambiguous.
+codesign --force --timestamp --sign "$IDENTITY" "$DMG"
+
+echo "==> Notarizing the DMG"
+xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+xcrun stapler staple "$DMG"
+
+echo "==> Gatekeeper verification"
+spctl -a -vvv "$APP" || true
+spctl -a -t open --context context:primary-signature -vv "$DMG" || true
+
+echo "Release built + notarized: $DMG"
