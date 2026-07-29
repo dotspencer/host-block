@@ -28,7 +28,7 @@ struct ListsTabView: View {
                     }
                     if state.sources.isEmpty {
                         Text("No lists yet — add a custom one below.")
-                            .font(.system(size: 11))
+                            .font(Theme.font(11))
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
@@ -48,7 +48,7 @@ struct ListsTabView: View {
                     Image(systemName: "arrow.clockwise")
                     Text("Update all lists now")
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(Theme.font(11, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
@@ -92,20 +92,20 @@ struct ListsTabView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(source.name)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(Theme.font(12, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     if let url = URL(string: source.url) {
                         Link(destination: url) {
                             Image(systemName: "arrow.up.right.square")
-                                .font(.system(size: 11))
+                                .font(Theme.font(11))
                                 .foregroundStyle(Theme.info)
                         }
                         .help("View the raw list")
                     }
                 }
                 Text(meta(source))
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Theme.textSecondary)
+                    .font(Theme.font(11, mono: true))
+                    .foregroundStyle(state.failedListIDs.contains(source.id) ? Theme.danger : Theme.textSecondary)
             }
             Spacer(minLength: 7)
 
@@ -114,7 +114,7 @@ struct ListsTabView: View {
                 // doesn't shift the row content.
                 Button(action: { state.removeSource(id: source.id) }) {
                     Image(systemName: "trash")
-                        .font(.system(size: 12))
+                        .font(Theme.font(12))
                         .foregroundStyle(Theme.danger)
                 }
                 .buttonStyle(.plain)
@@ -137,10 +137,11 @@ struct ListsTabView: View {
         }
     }
 
-    /// "48K domains · 2h ago" — the age is dropped for a list that's never been
-    /// fetched (an unhelpful "never").
+    /// "48K domains · 2h ago" — or "· update failed" if the last fetch errored. The
+    /// age is dropped for a list that's never been fetched (an unhelpful "never").
     private func meta(_ source: BlocklistSource) -> String {
         let count = "\(Theme.abbreviate(source.domainCount)) domains"
+        if state.failedListIDs.contains(source.id) { return "\(count) · update failed" }
         guard let fetched = source.lastFetched else { return count }
         return "\(count) · \(Theme.relativeAge(fetched))"
     }
@@ -185,11 +186,11 @@ struct ListsTabView: View {
                 }
 
                 if let addError {
-                    Text(addError).font(.system(size: 11)).foregroundStyle(Theme.danger)
+                    Text(addError).font(Theme.font(11)).foregroundStyle(Theme.danger)
                 }
 
                 Label("Supports hosts files, domain lists, GitHub Gists", systemImage: "link")
-                    .font(.system(size: 11))
+                    .font(Theme.font(11))
                     .foregroundStyle(Theme.textSecondary)
             } else {
                 Button(action: { addingCustom = true }) {
@@ -197,7 +198,7 @@ struct ListsTabView: View {
                         Image(systemName: "plus")
                         Text("Add custom blocklist URL or GitHub Gist…")
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(Theme.font(12, weight: .medium))
                     .foregroundStyle(Theme.info)
                 }
                 .buttonStyle(.plain)

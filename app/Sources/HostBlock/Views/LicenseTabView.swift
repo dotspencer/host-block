@@ -22,7 +22,7 @@ struct LicenseTabView: View {
             licenseCard(license)
             if let error = state.deactivationError {
                 Text(error)
-                    .font(.system(size: 11))
+                    .font(Theme.font(11))
                     .foregroundStyle(Theme.danger)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -38,10 +38,10 @@ struct LicenseTabView: View {
             // Title: tier + device limit (e.g. "Personal · 1 device").
             HStack(spacing: 5) {
                 Text(license.tier.displayName)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(Theme.font(12, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("· \(license.tier.deviceLimit)")
-                    .font(.system(size: 11))
+                    .font(Theme.font(11))
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()
             }
@@ -68,11 +68,11 @@ struct LicenseTabView: View {
     private func infoRow(label: String, value: String) -> some View {
         HStack(spacing: 11) {
             Text(label)
-                .font(.system(size: 11))
+                .font(Theme.font(11))
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 7)
             Text(value)
-                .font(.system(size: 11, design: .monospaced))
+                .font(Theme.font(11, mono: true))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(1)
@@ -94,7 +94,7 @@ struct LicenseTabView: View {
                 Text(state.isDeactivating ? "Releasing device…" : "Remove license")
                 Spacer()
             }
-            .font(.system(size: 11))
+            .font(Theme.font(11))
             .foregroundStyle(Theme.textSecondary)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
@@ -127,19 +127,19 @@ struct LicenseTabView: View {
             HStack(spacing: 7) {
                 Image(systemName: "info.circle").foregroundStyle(Theme.info)
                 Text("Upgrade to Pro")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(Theme.font(12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
             }
             Text("Use HostBlock on unlimited devices with a single Pro license.")
-                .font(.system(size: 11))
+                .font(Theme.font(11))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Link(destination: AppConstants.upgradeURL) {
                 HStack(spacing: 5) {
                     Text("Upgrade to Pro")
-                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
+                    Image(systemName: "chevron.right").font(Theme.font(10, weight: .bold))
                 }
-                .font(.system(size: 11, weight: .semibold))
+                .font(Theme.font(11, weight: .semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
@@ -160,15 +160,15 @@ struct LicenseTabView: View {
             RoundedRectangle(cornerRadius: 11)
                 .fill(Theme.surfaceElevated)
                 .frame(width: 49, height: 49)
-                .overlay(Image(systemName: "key.fill").font(.system(size: 18)).foregroundStyle(Theme.textSecondary))
+                .overlay(Image(systemName: "key.fill").font(Theme.font(18)).foregroundStyle(Theme.textSecondary))
                 .padding(.top, 7)
 
             VStack(spacing: 4) {
                 Text("Activate HostBlock")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(Theme.font(14, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("Enter your license key to activate")
-                    .font(.system(size: 11))
+                    .font(Theme.font(11))
                     .foregroundStyle(Theme.textSecondary)
             }
 
@@ -176,7 +176,7 @@ struct LicenseTabView: View {
 
             if let error = state.activationError {
                 Text(error)
-                    .font(.system(size: 11))
+                    .font(Theme.font(11))
                     .foregroundStyle(Theme.danger)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -189,18 +189,18 @@ struct LicenseTabView: View {
     private var freeLicenseCard: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("Free Personal License")
-                .font(.system(size: 12, weight: .semibold))
+                .font(Theme.font(12, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
             Text("HostBlock is free for personal use on 1 device. Get a free key at hostblock.app.")
-                .font(.system(size: 11))
+                .font(Theme.font(11))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Link(destination: AppConstants.freeLicenseURL) {
                 HStack(spacing: 4) {
                     Text("Get free license")
-                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
+                    Image(systemName: "chevron.right").font(Theme.font(10, weight: .bold))
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(Theme.font(11, weight: .medium))
                 .foregroundStyle(Theme.info)
             }
             .buttonStyle(.plain)
@@ -234,7 +234,7 @@ private struct ActivationField: View {
                 .textFieldStyle(.plain)
                 .tint(.white)
                 .focused($isInputFocused)
-                .font(.system(size: 12, design: .monospaced))
+                .font(Theme.font(12, mono: true))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
@@ -261,7 +261,7 @@ private struct ActivationField: View {
 
             Button(action: { state.activate(licenseKey: key) }) {
                 Text(state.isActivating ? "Activating…" : "Activate License")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(Theme.font(12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 11)

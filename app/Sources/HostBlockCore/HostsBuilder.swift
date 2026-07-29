@@ -18,9 +18,12 @@ public struct HostsBuilder: Sendable {
     }
 
     public struct Result: Sendable {
+        /// Domains contributed per list that produced data (fresh download or cache).
         public let counts: [String: Int]
+        /// Lists whose download attempt failed on this build (even if stale cache was
+        /// used as a fallback). Their "updated" time should not advance.
+        public let failedIDs: Set<String>
         public let total: Int
-        public let errors: [String]
         public let wroteStaging: Bool
     }
 
@@ -36,33 +39,33 @@ public struct HostsBuilder: Sendable {
     public func build(lists: [List], forceRefresh: Bool) async -> Result {
         var all = Set<String>()
         var counts: [String: Int] = [:]
-        var errors: [String] = []
+        var failed: Set<String> = []
         for list in lists {
-            do {
-                let domains = try await domains(for: list, forceRefresh: forceRefresh)
+            let (domains, didFail) = await load(list, forceRefresh: forceRefresh)
+            if didFail { failed.insert(list.id) }
+            if !domains.isEmpty {
                 all.formUnion(domains)
                 counts[list.id] = domains.count
-            } catch {
-                errors.append("\(list.name): \(error.localizedDescription)")
             }
         }
         let sorted = all.sorted()
         let wrote = (try? DomainParser.hostsLines(for: sorted)
             .write(to: stagingURL, atomically: true, encoding: .utf8)) != nil
-        return Result(counts: counts, total: sorted.count, errors: errors, wroteStaging: wrote)
+        return Result(counts: counts, failedIDs: failed, total: sorted.count, wroteStaging: wrote)
     }
 
-    private func domains(for list: List, forceRefresh: Bool) async throws -> [String] {
-        if !forceRefresh, let cached = readCache(list.id) { return cached }
+    /// The list's domains (fresh download, else cache) plus whether a download attempt
+    /// failed. A failed download still yields stale cache data when one exists.
+    private func load(_ list: List, forceRefresh: Bool) async -> (domains: [String], failed: Bool) {
+        if !forceRefresh, let cached = readCache(list.id) { return (cached, false) }
         do {
             let source = BlocklistSource(id: list.id, name: list.name, url: list.url, enabled: true)
             let domains = try await fetcher.download(source)
             writeCache(list.id, domains)
-            return domains
+            return (domains, false)
         } catch {
-            // Fall back to a stale cache if the download fails.
-            if let cached = readCache(list.id) { return cached }
-            throw error
+            if let cached = readCache(list.id) { return (cached, true) }
+            return ([], true)
         }
     }
 

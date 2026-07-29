@@ -33,14 +33,14 @@ struct MenuView: View {
                 .frame(width: 39, height: 39)
                 .overlay(
                     Image(systemName: isActive ? "shield.fill" : "shield.slash")
-                        .font(.system(size: 18))
+                        .font(Theme.font(18))
                         .foregroundStyle(isActive ? Theme.accent : Theme.textSecondary)
                 )
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     Text("HostBlock")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(Theme.font(13, weight: .bold))
                         .foregroundStyle(Theme.textPrimary)
                     if state.license != nil {
                         StatusBadge(
@@ -50,7 +50,7 @@ struct MenuView: View {
                     }
                 }
                 Text(subline)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(Theme.font(11, mono: true))
                     .foregroundStyle(Theme.textSecondary)
             }
 
@@ -93,9 +93,9 @@ struct MenuView: View {
             VStack(spacing: 0) {
                 HStack(spacing: 5) {
                     Image(systemName: locked ? "lock.fill" : tab.icon)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(Theme.font(11, weight: .medium))
                     Text(tab.title)
-                        .font(.system(size: 12, weight: selected ? .semibold : .regular))
+                        .font(Theme.font(12, weight: selected ? .semibold : .regular))
                 }
                 .foregroundStyle(selected ? Theme.textPrimary : (locked ? Theme.textTertiary : Theme.textSecondary))
                 .frame(maxHeight: .infinity)
@@ -127,7 +127,7 @@ struct MenuView: View {
     private var footer: some View {
         HStack {
             Text("v\(AppConstants.appVersion)")
-                .font(.system(size: 11, design: .monospaced))
+                .font(Theme.font(11, mono: true))
                 .foregroundStyle(Theme.textTertiary)
             Spacer()
             Button("Preferences") { WindowManager.shared.showPreferences() }
@@ -138,7 +138,7 @@ struct MenuView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(Theme.textSecondary)
         }
-        .font(.system(size: 11))
+        .font(Theme.font(11))
         .padding(14)
     }
 }

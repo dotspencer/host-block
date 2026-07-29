@@ -1,12 +1,11 @@
 # HostBlock
 
-A lightweight native macOS menu bar app for hosts-file domain blocking — set it up
-once and forget about it.
+A lightweight native macOS menu bar app for hosts-file domain blocking.
 
 This repo is a monorepo:
 
-| Directory | What it is |
-|---|---|
-| [`app/`](app) | The macOS menu bar app (Swift / SwiftUI). See [`app/README.md`](app/README.md) to build. |
+| Directory           | What it is                                                                                           |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`app/`](app)       | The macOS menu bar app (Swift / SwiftUI). See [`app/README.md`](app/README.md) to build.             |
 | [`server/`](server) | The license-decrement Cloudflare Worker. See [`server/license-decrement`](server/license-decrement). |
-| `site/` | *(planned)* the hostblock.app homepage. |
+| `site/`             | _(planned)_ the hostblock.app homepage.                                                              |

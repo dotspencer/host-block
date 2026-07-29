@@ -178,8 +178,28 @@ final class HostsBuilderTests: XCTestCase {
         XCTAssertEqual(result.total, 3)             // a, b, c — b deduped across lists
         XCTAssertEqual(result.counts["l1"], 2)
         XCTAssertEqual(result.counts["l2"], 2)
-        XCTAssertTrue(result.errors.isEmpty)
+        XCTAssertTrue(result.failedIDs.isEmpty)
         let written = try String(contentsOf: staging, encoding: .utf8)
         XCTAssertEqual(written, "0.0.0.0 a.example.com\n0.0.0.0 b.example.com\n0.0.0.0 c.example.com\n")
+    }
+
+    func testForcedRefreshFlagsFailedDownloadButKeepsCache() async throws {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let cacheDir = tmp.appendingPathComponent("cache")
+        try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        // A cached list whose URL can't resolve — a forced refresh must fail to
+        // download but still fall back to the cache, and report the failure.
+        try "a.example.com\n".write(to: cacheDir.appendingPathComponent("l1.txt"), atomically: true, encoding: .utf8)
+        let builder = HostsBuilder(cacheDir: cacheDir, stagingURL: tmp.appendingPathComponent("hosts_block.txt"))
+        let result = await builder.build(
+            lists: [.init(id: "l1", name: "L1", url: "https://no-such-host.invalid/list.txt")],
+            forceRefresh: true
+        )
+
+        XCTAssertTrue(result.failedIDs.contains("l1"))  // download failed
+        XCTAssertEqual(result.counts["l1"], 1)          // but stale cache still used
+        XCTAssertEqual(result.total, 1)
     }
 }

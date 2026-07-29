@@ -7,7 +7,7 @@ struct PreferencesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Preferences")
-                .font(.system(size: 14, weight: .bold))
+                .font(Theme.font(14, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
 
             // GreenToggleStyle renders only the pill, so the label goes beside it here.
@@ -15,7 +15,7 @@ struct PreferencesView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Launch at login").foregroundStyle(Theme.textPrimary)
                     Text("Start HostBlock automatically when you sign in.")
-                        .font(.system(size: 11))
+                        .font(Theme.font(11))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
@@ -38,7 +38,7 @@ struct PreferencesView: View {
                     Text(state.helperInstalled
                          ? "HostBlock can update the hosts file without prompting."
                          : "Grant admin access once to enable blocking.")
-                        .font(.system(size: 11))
+                        .font(Theme.font(11))
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()

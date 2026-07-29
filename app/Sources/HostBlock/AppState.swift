@@ -87,6 +87,8 @@ final class AppState: ObservableObject {
     @Published var activationError: String?
     @Published private(set) var isDeactivating = false
     @Published private(set) var deactivationError: String?
+    /// Lists whose most recent update attempt failed to download (shown per-row).
+    @Published private(set) var failedListIDs: Set<String> = []
     @Published var selectedTab: Tab = .lists
 
     private let store: ConfigStore
@@ -486,9 +488,12 @@ final class AppState: ObservableObject {
         for (id, count) in result.counts {
             if let index = sources.firstIndex(where: { $0.id == id }) {
                 sources[index].domainCount = count
-                sources[index].lastFetched = now
+                // Only advance "updated" for lists that actually fetched fresh — a
+                // failed download (even one that fell back to cache) keeps the old date.
+                if !result.failedIDs.contains(id) { sources[index].lastFetched = now }
             }
         }
+        failedListIDs = result.failedIDs
         guard result.wroteStaging else {
             lastError = "Couldn't build the block list."
             return
@@ -501,9 +506,6 @@ final class AppState: ObservableObject {
         } catch {
             lastError = error.localizedDescription
             return
-        }
-        if !result.errors.isEmpty {
-            lastError = result.errors.joined(separator: "\n")
         }
     }
 }

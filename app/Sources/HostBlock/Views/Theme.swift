@@ -22,6 +22,13 @@ enum Theme {
     static let textSecondary = Color.white.opacity(0.55)
     static let textTertiary = Color.white.opacity(0.35)
 
+    /// Every text style routes through here, so the app's font family lives in one
+    /// place. Swap the `design` (or use `.custom(...)`) to restyle all text at once.
+    /// Currently the macOS system font (SF Pro), with SF Mono when `mono` is true.
+    static func font(_ size: CGFloat, weight: Font.Weight = .regular, mono: Bool = false) -> Font {
+        .system(size: size, weight: weight, design: mono ? .monospaced : .default)
+    }
+
     /// "48000" -> "48K", "246633" -> "246K", small values stay exact.
     static func abbreviate(_ count: Int) -> String {
         if count >= 1_000_000 {
@@ -50,7 +57,7 @@ struct StatusBadge: View {
     let color: Color
     var body: some View {
         Text(text)
-            .font(.system(size: 9, weight: .bold, design: .monospaced))
+            .font(Theme.font(9, weight: .bold, mono: true))
             .tracking(0.5)
             .foregroundStyle(color)
             .padding(.horizontal, 5)
@@ -84,7 +91,7 @@ struct GreenToggleStyle: ToggleStyle {
 extension View {
     func sectionHeader() -> some View {
         self
-            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+            .font(Theme.font(10, weight: .semibold, mono: true))
             .tracking(1.0)
             .foregroundStyle(Theme.textSecondary)
     }
