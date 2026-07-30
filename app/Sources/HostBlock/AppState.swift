@@ -413,7 +413,9 @@ final class AppState: ObservableObject {
 
     @discardableResult
     func addCustomList(name: String, urlString: String) -> String? {
-        let trimmedURL = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Turn a pasted Gist page URL into its /raw form so the fetcher gets file
+        // contents instead of the gist's HTML page.
+        let trimmedURL = GistURL.rawified(urlString.trimmingCharacters(in: .whitespacesAndNewlines))
         guard
             let url = URL(string: trimmedURL),
             let scheme = url.scheme?.lowercased(),

@@ -129,6 +129,50 @@ final class UpdateCheckerTests: XCTestCase {
     }
 }
 
+final class GistURLTests: XCTestCase {
+    func testGistPageURLGetsRawSuffix() {
+        XCTAssertEqual(
+            GistURL.rawified("https://gist.github.com/user/abc123"),
+            "https://gist.github.com/user/abc123/raw"
+        )
+    }
+
+    func testTrailingSlashAndFragmentStripped() {
+        XCTAssertEqual(
+            GistURL.rawified("https://gist.github.com/user/abc123/"),
+            "https://gist.github.com/user/abc123/raw"
+        )
+        XCTAssertEqual(
+            GistURL.rawified("https://gist.github.com/user/abc123#file-hosts-txt"),
+            "https://gist.github.com/user/abc123/raw"
+        )
+    }
+
+    func testAnonymousGist() {
+        XCTAssertEqual(
+            GistURL.rawified("https://gist.github.com/abc123"),
+            "https://gist.github.com/abc123/raw"
+        )
+    }
+
+    func testAlreadyRawAndNonGistPassThrough() {
+        // Already a /raw gist page link.
+        XCTAssertEqual(
+            GistURL.rawified("https://gist.github.com/user/abc123/raw"),
+            "https://gist.github.com/user/abc123/raw"
+        )
+        // Already the raw content host.
+        let raw = "https://gist.githubusercontent.com/user/abc123/raw/x/hosts.txt"
+        XCTAssertEqual(GistURL.rawified(raw), raw)
+        // A revision/file path — left alone.
+        let deep = "https://gist.github.com/user/abc123/raw/abc/hosts.txt"
+        XCTAssertEqual(GistURL.rawified(deep), deep)
+        // Not a gist at all.
+        let other = "https://big.oisd.nl/domainswild2"
+        XCTAssertEqual(GistURL.rawified(other), other)
+    }
+}
+
 final class ModelDecodingTests: XCTestCase {
     /// A config written by the pre-redesign app (isBuiltIn, no category/counts) must
     /// still decode, defaulting missing fields rather than throwing.

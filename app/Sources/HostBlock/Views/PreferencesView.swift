@@ -56,10 +56,22 @@ struct PreferencesView: View {
             }
             .disabled(!state.helperInstalled || state.isWorking)
 
+            Divider().overlay(Theme.separator)
+
+            HStack(spacing: 9) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundStyle(Theme.textSecondary)
+                Text("Enabled blocklists update automatically once every 24 hours.")
+                    .font(Theme.font(11))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+
             Spacer()
         }
         .padding(18)
-        .frame(width: 334, height: 264)
+        .frame(width: 334, height: 300)
         .background(Theme.background)
         .environment(\.colorScheme, .dark)
     }

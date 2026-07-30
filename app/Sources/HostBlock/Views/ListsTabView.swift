@@ -202,7 +202,7 @@ struct ListsTabView: View {
                     Text(addError).font(Theme.font(11)).foregroundStyle(Theme.danger)
                 }
 
-                Label("Supports hosts files and domain lists. Use the raw link with GitHub Gists.", systemImage: "link")
+                Label("Supports hosts files and domain lists. Works well with GitHub Gists.", systemImage: "link")
                     .font(Theme.font(11))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
