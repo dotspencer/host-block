@@ -8,17 +8,15 @@ server-side instead of shipping it in the app.
 endpoint, so a bad key can't decrement anything), then decrements if `uses > 0`.
 Returns `{ "success": true, "decremented": true|false }`; invalid keys get `404`.
 
-Served at `https://api.hostblock.app/license/decrement` (see `wrangler.toml`),
-leaving the rest of `api.hostblock.app` free for other endpoints later.
+Served at `https://license-decrement.hostblock.app` (see `wrangler.toml`).
 
 ## Deploy
 
 Needs [Bun](https://bun.sh). No dependencies to install — `bunx` fetches
 `wrangler` on demand.
 
-The path route in `wrangler.toml` does **not** auto-create DNS. First, in the
-`hostblock.app` zone, add a proxied (orange-cloud) record for `api` — e.g. an
-`AAAA` record `api` → `100::` — so requests reach Cloudflare's edge. Then:
+The `custom_domain` route in `wrangler.toml` auto-provisions the proxied DNS
+record + TLS cert on deploy — no manual DNS needed. Then:
 
 ```sh
 bunx wrangler login
@@ -26,8 +24,8 @@ bunx wrangler secret put GUMROAD_ACCESS_TOKEN   # paste your Gumroad token
 bunx wrangler deploy
 ```
 
-The app already points `AppConstants.decrementEndpoint` at
-`https://api.hostblock.app/license/decrement`. `GUMROAD_PRODUCT_ID` lives in
+The app points `AppConstants.decrementEndpoint` at
+`https://license-decrement.hostblock.app`. `GUMROAD_PRODUCT_ID` lives in
 `wrangler.toml` (public id). Local dev: `bunx wrangler dev` with the token in a
 gitignored `.dev.vars`.
 

@@ -2,12 +2,12 @@ name = "hostblock-license-decrement"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
-# Serve on a path of the shared API host, leaving api.hostblock.app free for other
-# endpoints later. A plain path route (unlike a custom_domain) does NOT auto-create
-# DNS: add a proxied record for `api` in the hostblock.app zone first — e.g. an AAAA
-# `api` -> 100:: with the orange cloud on — so requests reach the Worker.
+# Dedicated custom-domain host for this Worker. custom_domain auto-provisions the
+# proxied DNS + TLS cert, and — unlike a path route on a record with a dummy origin —
+# there is NO origin to fall through to, so a request can never hang on an unreachable
+# backend (which is what the old api.hostblock.app path-route setup risked).
 routes = [
-  { pattern = "api.hostblock.app/license/decrement", zone_name = "hostblock.app" }
+  { pattern = "license-decrement.hostblock.app", custom_domain = true }
 ]
 
 # The only public entrypoint is the route above; don't also expose the

@@ -32,7 +32,7 @@ enum AppConstants {
     /// URL of the license-decrement Cloudflare Worker (see server/license-decrement).
     /// Removing a license POSTs the key here so its uses slot is freed for a later
     /// re-add. Leave the placeholder to disable — removal still works locally.
-    static let decrementEndpoint = "https://api.hostblock.app/license/decrement"
+    static let decrementEndpoint = "https://license-decrement.hostblock.app"
     static let purchaseURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!

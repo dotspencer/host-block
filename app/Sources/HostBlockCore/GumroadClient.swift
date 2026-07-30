@@ -100,7 +100,9 @@ public struct GumroadClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
+        // The endpoint answers in well under a second when it lands, so keep this short:
+        // a failure should surface quickly rather than hang the UI for the OS default.
+        request.timeoutInterval = 8
         request.httpBody = try JSONEncoder().encode(["license_key": licenseKey])
 
         let session = Self.freshSession()
