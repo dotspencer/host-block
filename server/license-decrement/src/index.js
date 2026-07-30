@@ -13,21 +13,20 @@
 
 export default {
   async fetch(request, env) {
-    if (request.method === "OPTIONS") return withCORS(new Response(null, { status: 204 }));
-    if (request.method !== "POST") return withCORS(json({ success: false, error: "method_not_allowed" }, 405));
+    if (request.method !== "POST") return json({ success: false, error: "method_not_allowed" }, 405);
 
     const productId = env.GUMROAD_PRODUCT_ID;
     const token = env.GUMROAD_ACCESS_TOKEN;
-    if (!productId || !token) return withCORS(json({ success: false, error: "server_not_configured" }, 500));
+    if (!productId || !token) return json({ success: false, error: "server_not_configured" }, 500);
 
     let body;
     try {
       body = await request.json();
     } catch {
-      return withCORS(json({ success: false, error: "bad_json" }, 400));
+      return json({ success: false, error: "bad_json" }, 400);
     }
     const licenseKey = (body?.license_key || "").trim();
-    if (!licenseKey) return withCORS(json({ success: false, error: "missing_license_key" }, 400));
+    if (!licenseKey) return json({ success: false, error: "missing_license_key" }, 400);
 
     // 1) Verify the key is real and belongs to this product before touching anything.
     //    This is the public endpoint (no token) and does NOT increment the count.
@@ -38,11 +37,11 @@ export default {
       increment_uses_count: "false",
     });
     if (!verify || verify.success !== true) {
-      return withCORS(json({ success: false, error: "invalid_license" }, 404));
+      return json({ success: false, error: "invalid_license" }, 404);
     }
     // Already at zero — nothing to free, treat as success (idempotent).
     if ((verify.uses ?? 0) <= 0) {
-      return withCORS(json({ success: true, uses: 0, decremented: false }));
+      return json({ success: true, uses: 0, decremented: false });
     }
 
     // 2) Decrement (authenticated; the token stays server-side).
@@ -52,9 +51,9 @@ export default {
       license_key: licenseKey,
     });
     if (!dec || dec.success !== true) {
-      return withCORS(json({ success: false, error: "decrement_failed" }, 502));
+      return json({ success: false, error: "decrement_failed" }, 502);
     }
-    return withCORS(json({ success: true, uses: dec.uses, decremented: true }));
+    return json({ success: true, uses: dec.uses, decremented: true });
   },
 };
 
@@ -76,13 +75,4 @@ function json(obj, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
-}
-
-// CORS is harmless for the native app (which isn't a browser) but lets you test
-// the endpoint from a browser console during setup.
-function withCORS(resp) {
-  resp.headers.set("Access-Control-Allow-Origin", "*");
-  resp.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  resp.headers.set("Access-Control-Allow-Headers", "Content-Type");
-  return resp;
 }
