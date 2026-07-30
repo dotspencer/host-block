@@ -34,7 +34,7 @@ struct ListsTabView: View {
                 }
                 .padding(14)
             }
-            .frame(height: 300)
+            .frame(height: 310)
 
             Divider().overlay(Theme.separator)
 
@@ -76,7 +76,9 @@ struct ListsTabView: View {
 
     private func row(_ source: BlocklistSource) -> some View {
         // Only custom lists get the hover-reveal trash; default lists can't be removed.
-        let hovered = source.isCustom && hoveredID == source.id
+        let hovered = hoveredID == source.id
+        let url = URL(string: source.url)
+
         return HStack(alignment: .center, spacing: 11) {
             Toggle("", isOn: Binding(
                 get: { AppState.shared.source(withID: source.id)?.enabled ?? false },
@@ -89,25 +91,38 @@ struct ListsTabView: View {
             .disabled(!state.protectionEnabled)
             .opacity(state.protectionEnabled ? 1 : 0.4)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(source.name)
+                    .font(Theme.font(12, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+
                 HStack(spacing: 6) {
-                    Text(source.name)
-                        .font(Theme.font(12, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    if let url = URL(string: source.url) {
-                        Link(destination: url) {
-                            Image(systemName: "arrow.up.right.square")
-                                .font(Theme.font(11))
-                                .foregroundStyle(Theme.info)
-                        }
-                        .help("View the raw list")
+                    Text(meta(source))
+                        .font(Theme.font(11, mono: true))
+                        .foregroundStyle(state.failedListIDs.contains(source.id) ? Theme.danger : Theme.textSecondary)
+                        .help("\(source.domainCount.formatted()) domains")
+                    ForEach(source.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(Theme.font(10, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 4))
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.stroke))
                     }
                 }
-                Text(meta(source))
-                    .font(Theme.font(11, mono: true))
-                    .foregroundStyle(state.failedListIDs.contains(source.id) ? Theme.danger : Theme.textSecondary)
             }
             Spacer(minLength: 7)
+
+            if url != nil {
+                Link(destination: url!) {
+                  Image(systemName: "arrow.up.right.square")
+                      .font(Theme.font(12))
+                      .foregroundStyle(Theme.textSecondary)
+              }
+              .help("View the raw list")
+              .opacity(hovered ? 1 : 0)
+            }
 
             if source.isCustom {
                 // Trash stays in the layout (opacity-toggled) so revealing it on hover
@@ -131,19 +146,17 @@ struct ListsTabView: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering in
-            guard source.isCustom else { return }
             if hovering { hoveredID = source.id }
             else if hoveredID == source.id { hoveredID = nil }
         }
     }
 
-    /// "48K domains · 2h ago" — or "· update failed" if the last fetch errored. The
-    /// age is dropped for a list that's never been fetched (an unhelpful "never").
+    /// Short count for the row: "48K" — or "48K · update failed" if the last fetch
+    /// errored. The full "48K domains" lives in the row's help tooltip.
     private func meta(_ source: BlocklistSource) -> String {
-        let count = "\(Theme.abbreviate(source.domainCount)) domains"
-        if state.failedListIDs.contains(source.id) { return "\(count) · update failed" }
-        guard let fetched = source.lastFetched else { return count }
-        return "\(count) · \(Theme.relativeAge(fetched))"
+        let count = Theme.abbreviate(source.domainCount)
+        if state.failedListIDs.contains(source.id) { return "\(count) - update failed" }
+        return count
     }
 
     // MARK: Custom list
@@ -160,7 +173,7 @@ struct ListsTabView: View {
                     .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.stroke))
 
                 HStack(spacing: 7) {
-                    TextField("https:// or gist URL", text: $customURL)
+                    TextField("https://", text: $customURL)
                         .textFieldStyle(.plain)
                         .onSubmit(submitCustom)
                         .padding(9)
@@ -189,14 +202,15 @@ struct ListsTabView: View {
                     Text(addError).font(Theme.font(11)).foregroundStyle(Theme.danger)
                 }
 
-                Label("Supports hosts files, domain lists, GitHub Gists", systemImage: "link")
+                Label("Supports hosts files and domain lists. Use the raw link with GitHub Gists.", systemImage: "link")
                     .font(Theme.font(11))
                     .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 Button(action: { addingCustom = true }) {
                     HStack(spacing: 7) {
                         Image(systemName: "plus")
-                        Text("Add custom blocklist URL or GitHub Gist…")
+                        Text("Add custom blocklist URL…")
                     }
                     .font(Theme.font(12, weight: .medium))
                     .foregroundStyle(Theme.info)

@@ -19,6 +19,26 @@
       "target": "HostBlock",
       "configuration": "release",
       "preLaunchTask": "swift: Build Release HostBlock"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:host-block}/app",
+      "name": "Debug HostBlock (app)",
+      "target": "HostBlock",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug HostBlock (app)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:host-block}/app",
+      "name": "Release HostBlock (app)",
+      "target": "HostBlock",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release HostBlock (app)"
     }
   ]
 }

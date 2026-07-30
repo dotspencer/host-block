@@ -83,6 +83,7 @@ public struct LicenseInfo: Codable, Equatable, Sendable {
 public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
+    public var tags: [String]
     public var detail: String?
     public var url: String
     public var enabled: Bool
@@ -95,6 +96,7 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     public init(
         id: String,
         name: String,
+        tags: [String],
         detail: String? = nil,
         url: String,
         enabled: Bool,
@@ -104,6 +106,7 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     ) {
         self.id = id
         self.name = name
+        self.tags = tags
         self.detail = detail
         self.url = url
         self.enabled = enabled
@@ -118,6 +121,7 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
         detail = try c.decodeIfPresent(String.self, forKey: .detail)
         url = try c.decode(String.self, forKey: .url)
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
@@ -140,7 +144,7 @@ public struct BlocklistSource: Codable, Identifiable, Equatable, Sendable {
     }
 
     public static func custom(id: String = UUID().uuidString, name: String, url: String, host: String?) -> BlocklistSource {
-        BlocklistSource(id: id, name: name, detail: host, url: url, enabled: true, isCustom: true)
+        BlocklistSource(id: id, name: name, tags: [], detail: host, url: url, enabled: true, isCustom: true)
     }
 }
 

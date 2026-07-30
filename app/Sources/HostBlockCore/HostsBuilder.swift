@@ -59,7 +59,7 @@ public struct HostsBuilder: Sendable {
     private func load(_ list: List, forceRefresh: Bool) async -> (domains: [String], failed: Bool) {
         if !forceRefresh, let cached = readCache(list.id) { return (cached, false) }
         do {
-            let source = BlocklistSource(id: list.id, name: list.name, url: list.url, enabled: true)
+            let source = BlocklistSource(id: list.id, name: list.name, tags: [], url: list.url, enabled: true)
             let domains = try await fetcher.download(source)
             writeCache(list.id, domains)
             return (domains, false)

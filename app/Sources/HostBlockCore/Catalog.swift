@@ -4,6 +4,7 @@ import Foundation
 public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
     public var id: String
     public var name: String
+    public var tags: [String]
     public var description: String
     public var url: String
     /// Advertised domain count, shown until the list is fetched for real.
@@ -11,9 +12,10 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
     /// Whether this list is on by default when it first appears for a user.
     public var enabledByDefault: Bool
 
-    public init(id: String, name: String, description: String, url: String, domainCount: Int, enabledByDefault: Bool = false) {
+    public init(id: String, name: String, tags: [String], description: String, url: String, domainCount: Int, enabledByDefault: Bool = false) {
         self.id = id
         self.name = name
+        self.tags = tags;
         self.description = description
         self.url = url
         self.domainCount = domainCount
@@ -24,6 +26,7 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
         description = try c.decodeIfPresent(String.self, forKey: .description) ?? ""
         url = try c.decode(String.self, forKey: .url)
         domainCount = try c.decodeIfPresent(Int.self, forKey: .domainCount) ?? 0
@@ -34,6 +37,7 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
         BlocklistSource(
             id: id,
             name: name,
+            tags: tags,
             detail: URL(string: url)?.host,
             url: url,
             enabled: enabled,
@@ -53,8 +57,8 @@ public enum Catalog {
     public static let bundled: [CatalogEntry] = {
         guard
             let url = Bundle.module.url(forResource: fallbackResource, withExtension: "json"),
-            let data = try? Data(contentsOf: url),
-            let entries = try? decode(data)
+            let data: Data = try? Data(contentsOf: url),
+            let entries: [CatalogEntry] = try? decode(data)
         else {
             assertionFailure("Bundled catalog-fallback.json is missing or malformed")
             return []

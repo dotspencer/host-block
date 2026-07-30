@@ -2,6 +2,11 @@
   {
     "id": "oisd-big",
     "name": "OISD Big",
+    "tags": [
+      "ads",
+      "trackers",
+      "malware"
+    ],
     "description": "Ads, trackers, and malware — tuned not to break sites. Recommended.",
     "url": "https://big.oisd.nl/domainswild2",
     "domainCount": 330000,
@@ -10,6 +15,9 @@
   {
     "id": "hagezi-nsfw",
     "name": "HaGeZi NSFW",
+    "tags": [
+      "adult"
+    ],
     "description": "Adult and pornographic sites.",
     "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt",
     "domainCount": 116000
@@ -17,6 +25,11 @@
   {
     "id": "hagezi-normal",
     "name": "HaGeZi Normal",
+    "tags": [
+      "ads",
+      "malware",
+      "phishing"
+    ],
     "description": "Balanced all-in-one: ads, trackers, malware, phishing. Rarely breaks sites.",
     "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/multi.txt",
     "domainCount": 433000
@@ -24,6 +37,10 @@
   {
     "id": "stevenblack-unified",
     "name": "StevenBlack Unified",
+    "tags": [
+      "ads",
+      "malware"
+    ],
     "description": "The classic ads + malware hosts file.",
     "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
     "domainCount": 90000

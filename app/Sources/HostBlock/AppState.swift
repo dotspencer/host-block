@@ -206,6 +206,7 @@ final class AppState: ObservableObject {
         var merged: [BlocklistSource] = catalog.map { entry in
             if var prior = existing[entry.id], !prior.isCustom {
                 prior.name = entry.name
+                prior.tags = entry.tags
                 prior.url = entry.url
                 prior.detail = URL(string: entry.url)?.host
                 return prior
