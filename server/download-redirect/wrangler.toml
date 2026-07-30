@@ -2,15 +2,15 @@ name = "hostblock-download-redirect"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
-# Serve /download on the apex site host. A plain path route does NOT auto-create
-# DNS: the hostblock.app apex must already resolve through Cloudflare (proxied,
-# orange-cloud) for requests to reach the Worker.
+# Dedicated download host. custom_domain auto-provisions the proxied DNS record and
+# edge TLS cert for download.hostblock.app on deploy — no manual DNS needed. Any
+# request to download.hostblock.app redirects to the current DMG.
 routes = [
-  { pattern = "hostblock.app/download", zone_name = "hostblock.app" }
+  { pattern = "download.hostblock.app", custom_domain = true }
 ]
 
-# The only public entrypoint is the route above; don't also expose the
-# *.workers.dev URL. Flip to true temporarily if you need to test before DNS is set.
+# The only public entrypoint is the custom domain above; don't also expose the
+# *.workers.dev URL.
 workers_dev = false
 
 [vars]

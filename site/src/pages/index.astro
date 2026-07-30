@@ -1,13 +1,13 @@
 ---
-const downloadURL = "/download";
-const gumroadURL = "https://smithlabs.gumroad.com/l/host-block";
-const githubURL = "https://github.com/dotspencer/host-block";
+const downloadURL = 'https://download.hostblock.app';
+const gumroadURL = 'https://smithlabs.gumroad.com/l/host-block';
+const githubURL = 'https://github.com/dotspencer/host-block';
 
 const features = [
-  "Open source",
-  "Default blocklists for ads, trackers, and adult content",
-  "Add your own from any URL or GitHub Gist",
-  "Toggle off in one click from the menu bar",
+  'Open source',
+  'Default blocklists for ads, trackers, and adult content',
+  'Add your own from any URL or GitHub Gist',
+  'Toggle off in one click from the menu bar',
 ];
 ---
 
@@ -23,7 +23,10 @@ const features = [
       content="Block ads, trackers, and unwanted domains across every browser and app on your Mac. No extensions, no proxy, no VPN."
     />
     <meta property="og:title" content="HostBlock" />
-    <meta property="og:description" content="System-wide ad & tracker blocking from your menu bar." />
+    <meta
+      property="og:description"
+      content="System-wide ad & tracker blocking from your menu bar."
+    />
     <meta property="og:image" content="https://hostblock.app/appicon.png" />
     <meta property="og:url" content="https://hostblock.app" />
     <meta property="og:type" content="website" />
@@ -32,21 +35,45 @@ const features = [
   <body>
     <main>
       <section class="hero">
-        <img class="icon" src="/appicon.png" alt="HostBlock icon" width="112" height="112" />
+        <img
+          class="icon"
+          src="/appicon.png"
+          alt="HostBlock icon"
+          width="112"
+          height="112"
+        />
         <h1>HostBlock</h1>
-        <p class="tagline">
-          Block ads, trackers, and unwanted domains across every browser and app on your Mac.
-        </p>
+        <div class="tagline">
+          A lightweight menu bar app that updates your hosts file to block ads,
+          trackers, and malware across your entire Mac.
+        </div>
+        <!-- <p class="tagline">
+          A lightweight menu bar app that updates your hosts file to block ads,
+          trackers, and other malicious domains.
+        </p> -->
+        <!-- <div class="tagline">
+          A lightweight macOS menu bar app that blocks ads, trackers, and
+          malware.
+        </div> -->
+        <!-- <p class="tagline">
+          Block ads, trackers, and unwanted domains across every browser and app
+          on your Mac.
+        </p> -->
         <div class="cta-wrap">
           <a class="cta primary" href={downloadURL}>Download for Mac</a>
           <a class="cta" href={gumroadURL}>Get a License</a>
         </div>
-        <p class="sub">Requires macOS 13 or later · No proxy, no VPN</p>
+        <!-- <p class="sub">No extensions, no proxy, no VPN.</p> -->
       </section>
 
-      <ul class="features">
+      <!-- <p>
+        HostBlock edits your hosts file directly, so blocking is instant,
+        system-wide, and fully local. Your traffic never leaves your machine.
+      </p> -->
+
+      <!-- <ul class="features">
         {features.map((f) => <li>{f}</li>)}
-      </ul>
+      </ul> -->
 
       <footer>
         <a href={githubURL}>Open source on GitHub</a>
@@ -74,7 +101,8 @@ const features = [
       body {
         background: var(--bg);
         color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
       }
@@ -86,6 +114,9 @@ const features = [
         flex-direction: column;
         align-items: center;
         text-align: center;
+      }
+      p {
+        color: var(--text);
       }
       .hero {
         display: flex;
@@ -126,7 +157,9 @@ const features = [
         color: var(--text);
         background: var(--surface);
         border: 1px solid var(--stroke);
-        transition: transform 0.1s ease, filter 0.1s ease;
+        transition:
+          transform 0.1s ease,
+          filter 0.1s ease;
       }
       .cta.primary {
         background: var(--accent);
@@ -157,7 +190,7 @@ const features = [
         color: var(--text-2);
       }
       .features li::before {
-        content: "";
+        content: '';
         position: absolute;
         left: 0;
         top: 0.55em;
