@@ -106,8 +106,10 @@ struct MenuView: View {
                     .fill(selected ? Theme.accent : .clear)
                     .frame(height: 2)
             }
-            // Full-width, full-height cell with a solid hit shape so a click anywhere
-            // in the tab column — including the space above and below the label — selects it.
+            // Full-width, fixed-height cell with a solid hit shape so a click anywhere
+            // in the tab column — including the space above and below the label — selects
+            // it. A fixed height (vs a min) keeps the bar from stretching to absorb extra
+            // window height on shorter tabs.
             .frame(maxWidth: .infinity, minHeight: 36, maxHeight: 36)
             .contentShape(Rectangle())
         }
@@ -135,6 +137,12 @@ struct MenuView: View {
             if let update = state.availableUpdate, let url = URL(string: update.url) {
                 Button {
                     NSWorkspace.shared.open(url)
+                    // Quit so the downloaded DMG can replace the running app. Blocking
+                    // persists via /etc/hosts, so quitting doesn't unblock anything. The
+                    // brief delay lets the browser launch before we terminate.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        NSApp.terminate(nil)
+                    }
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.up.circle.fill")
