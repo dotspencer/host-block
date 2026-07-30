@@ -1,17 +1,190 @@
 ---
+const downloadURL = "/download";
+const gumroadURL = "https://smithlabs.gumroad.com/l/host-block";
+const githubURL = "https://github.com/dotspencer/host-block";
 
+const features = [
+  "Open source",
+  "Default blocklists for ads, trackers, and adult content",
+  "Add your own from any URL or GitHub Gist",
+  "Toggle off in one click from the menu bar",
+];
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/appicon.png" type="image/png" />
+    <title>HostBlock — system-wide ad &amp; tracker blocking for Mac</title>
+    <meta
+      name="description"
+      content="Block ads, trackers, and unwanted domains across every browser and app on your Mac. No extensions, no proxy, no VPN."
+    />
+    <meta property="og:title" content="HostBlock" />
+    <meta property="og:description" content="System-wide ad & tracker blocking from your menu bar." />
+    <meta property="og:image" content="https://hostblock.app/appicon.png" />
+    <meta property="og:url" content="https://hostblock.app" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <img class="icon" src="/appicon.png" alt="HostBlock icon" width="112" height="112" />
+        <h1>HostBlock</h1>
+        <p class="tagline">
+          Block ads, trackers, and unwanted domains across every browser and app on your Mac.
+        </p>
+        <div class="cta-wrap">
+          <a class="cta primary" href={downloadURL}>Download for Mac</a>
+          <a class="cta" href={gumroadURL}>Get a License</a>
+        </div>
+        <p class="sub">Requires macOS 13 or later · No proxy, no VPN</p>
+      </section>
+
+      <ul class="features">
+        {features.map((f) => <li>{f}</li>)}
+      </ul>
+
+      <footer>
+        <a href={githubURL}>Open source on GitHub</a>
+      </footer>
+    </main>
+
+    <style is:global>
+      :root {
+        --bg: #1e1e21;
+        --surface: #27272a;
+        --stroke: rgba(255, 255, 255, 0.09);
+        --accent: #4ad480;
+        --text: #f5f5f7;
+        --text-2: rgba(255, 255, 255, 0.6);
+        --text-3: rgba(255, 255, 255, 0.4);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        color-scheme: dark;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 72px 24px 56px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .icon {
+        width: 112px;
+        height: 112px;
+      }
+      h1 {
+        font-size: 2.6rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-top: 20px;
+      }
+      .tagline {
+        margin-top: 12px;
+        font-size: 1.2rem;
+        color: var(--text-2);
+        max-width: 32ch;
+      }
+      .cta-wrap {
+        display: flex;
+        gap: 12px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 11px 20px;
+        border-radius: 8px;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--stroke);
+        transition: transform 0.1s ease, filter 0.1s ease;
+      }
+      .cta.primary {
+        background: var(--accent);
+        color: #06110a;
+        border-color: transparent;
+      }
+      .cta:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+      }
+      .sub {
+        margin-top: 18px;
+        font-size: 0.9rem;
+        color: var(--text-3);
+      }
+      .features {
+        list-style: none;
+        margin-top: 48px;
+        display: grid;
+        gap: 10px;
+        text-align: left;
+        width: 100%;
+        max-width: 420px;
+      }
+      .features li {
+        position: relative;
+        padding-left: 26px;
+        color: var(--text-2);
+      }
+      .features li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55em;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--accent);
+      }
+      footer {
+        margin-top: 56px;
+        font-size: 0.9rem;
+      }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 2.1rem;
+        }
+        main {
+          padding-top: 48px;
+        }
+      }
+    </style>
+  </body>
 </html>
