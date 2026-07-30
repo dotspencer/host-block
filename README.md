@@ -8,4 +8,3 @@ This repo is a monorepo:
 | ------------------- | ---------------------------------------------------------------------------------------------------- |
 | [`app/`](app)       | The macOS menu bar app (Swift / SwiftUI). See [`app/README.md`](app/README.md) to build.             |
 | [`server/`](server) | The license-decrement Cloudflare Worker. See [`server/license-decrement`](server/license-decrement). |
-| `site/`             | _(planned)_ the hostblock.app homepage.                                                              |

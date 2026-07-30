@@ -1,0 +1,19 @@
+name = "hostblock-download-redirect"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Serve /download on the apex site host. A plain path route does NOT auto-create
+# DNS: the hostblock.app apex must already resolve through Cloudflare (proxied,
+# orange-cloud) for requests to reach the Worker.
+routes = [
+  { pattern = "hostblock.app/download", zone_name = "hostblock.app" }
+]
+
+# The only public entrypoint is the route above; don't also expose the
+# *.workers.dev URL. Flip to true temporarily if you need to test before DNS is set.
+workers_dev = false
+
+[vars]
+# The update feed to read; its "url" field is the DMG the redirect hands back.
+# Same file the app polls, so /download and in-app updates never drift apart.
+FEED_URL = "https://updates.hostblock.app/releases/latest.json"
