@@ -16,4 +16,4 @@ workers_dev = false
 [vars]
 # The update feed to read; its "url" field is the DMG the redirect hands back.
 # Same file the app polls, so /download and in-app updates never drift apart.
-FEED_URL = "https://updates.hostblock.app/releases/latest.json"
+FEED_URL = "https://github.com/dotspencer/host-block/releases/latest/download/latest.json"

@@ -9,8 +9,9 @@ VERSION="1.0.9"
 BUILD="1"
 IDENTITY="Developer ID Application: Spencer Smith (BVXWVLHLQJ)"
 NOTARY_PROFILE="hostblock notarization"
-# Public base URL of the R2 releases folder (where the DMG is uploaded).
-RELEASE_URL_BASE="https://updates.hostblock.app/releases"
+# GitHub repo that hosts releases. The DMG + latest.json ship as release assets via
+# `gh release create` (command printed at the end of a --release build).
+REPO="dotspencer/host-block"
 
 RELEASE=0
 [[ "${1:-}" == "--release" ]] && RELEASE=1
@@ -91,12 +92,12 @@ xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 
 echo "==> Writing update feed (latest.json)"
-# The app polls this to offer an "Update available" link. It lives alongside the DMG
-# under releases/ (served at $RELEASE_URL_BASE/latest.json).
+# Published as the release's latest.json asset; the app polls the `latest` release's
+# copy to offer an "Update available" link. `url` points at this release's DMG asset.
 cat > dist/latest.json <<EOF
 {
   "version": "$VERSION",
-  "url": "$RELEASE_URL_BASE/HostBlock-$VERSION.dmg"
+  "url": "https://github.com/$REPO/releases/download/v$VERSION/HostBlock-$VERSION.dmg"
 }
 EOF
 
@@ -106,6 +107,7 @@ spctl -a -t open --context context:primary-signature -vv "$DMG" || true
 
 echo
 echo "Release built + notarized: $DMG"
-echo "Upload both to the 'hostblock' R2 bucket under releases/:"
-echo "  • $(basename "$DMG")"
-echo "  • latest.json"
+echo "Publish as a GitHub release (attaches the DMG + latest.json as assets):"
+echo
+echo "  gh release create v$VERSION \"$DMG\" dist/latest.json \\"
+echo "    --repo $REPO --title \"$VERSION\" --notes \"<release notes>\""

@@ -1,6 +1,6 @@
 # HostBlock
 
-A lightweight native macOS menu bar app for hosts-file domain blocking.
+A lightweight menu bar app that updates your hosts file to block ads, trackers, and malware across your entire Mac.
 
 <img height="600" alt="Screenshot 2026-07-29 at 9 23 56 PM" src="https://github.com/user-attachments/assets/08274062-0973-477f-9ba0-b94cbcab48d8" />
 

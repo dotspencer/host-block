@@ -37,9 +37,11 @@ enum AppConstants {
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!
     static let catalogURL = "https://hostblock.app/catalog.json"
-    /// Update feed (latest.json on R2). Compared to the running version to surface an
-    /// "Update available" link — a lightweight check, not a Sparkle-style auto-updater.
-    static let updateFeedURL = "https://updates.hostblock.app/releases/latest.json"
+    /// Update feed — the latest GitHub release's `latest.json` asset. Compared to the
+    /// running version to surface an "Update available" link — a lightweight check, not
+    /// a Sparkle-style auto-updater. (`releases/latest/download/…` is a static CDN
+    /// redirect, so no api.github.com rate limit.)
+    static let updateFeedURL = "https://github.com/dotspencer/host-block/releases/latest/download/latest.json"
     /// The shipped version, read from the bundle's Info.plist (CFBundleShortVersionString)
     /// so the footer always matches what was actually built. Falls back for `swift run`.
     static let appVersion: String = {
