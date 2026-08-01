@@ -109,5 +109,6 @@ echo
 echo "Release built + notarized: $DMG"
 echo "Publish as a GitHub release (attaches the DMG + latest.json as assets):"
 echo
-echo "  gh release create v$VERSION \"$DMG\" dist/latest.json \\"
-echo "    --repo $REPO --title \"$VERSION\" --notes \"<release notes>\""
+echo "  gh release create v$VERSION \"$DMG\" dist/latest.json"
+echo
+echo "  (tag + title default to v$VERSION; add release notes afterward in the GitHub web UI)"
