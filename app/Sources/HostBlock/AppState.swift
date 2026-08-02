@@ -155,15 +155,28 @@ final class AppState: ObservableObject {
         if license != nil {
             refreshIfStale()
         }
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
-            Task { @MainActor in AppState.shared.refreshIfStale() }
+        // Hourly: re-check the daily blocklist refresh, and re-fetch the catalog so new
+        // default lists and removals (the kill switch) reach a long-running app instead
+        // of only at next launch.
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60 * 60, repeats: true) { _ in
+            Task { @MainActor in
+                AppState.shared.refreshIfStale()
+                await AppState.shared.refreshCatalog()
+            }
         }
     }
 
     /// Fires a fresh update check, e.g. when the menu opens. Unthrottled on purpose:
-    /// it's a tiny static JSON GET against R2 (free egress), so per-open is fine.
+    /// it's a tiny static JSON GET (a GitHub release asset), so per-open is fine.
     func checkForUpdatesOnDemand() {
         Task { await checkForUpdate() }
+    }
+
+    /// Re-fetches the catalog when the menu opens, so the Lists tab reflects newly added
+    /// or removed default lists (the kill switch) without waiting on the hourly timer.
+    /// Cheap: a tiny static catalog.json GET, and mergeDefaults no-ops when unchanged.
+    func refreshCatalogOnDemand() {
+        Task { await refreshCatalog() }
     }
 
     /// Asks the update feed whether a newer version exists and, if so, publishes it so
@@ -201,10 +214,23 @@ final class AppState: ObservableObject {
 
     /// Ensures every catalog list is present in `sources` as a non-deletable default,
     /// preserving the user's on/off choice and fetched counts. Custom (URL-added)
-    /// lists are kept as-is. Runs on launch and whenever the catalog refreshes, so a
-    /// newly-shipped default list appears (off by default) without any user action.
+    /// lists are kept as-is. Runs on launch and whenever the catalog refreshes.
+    ///
+    /// `enabledByDefault` only applies to a brand-new install's initial seed. Once the
+    /// user has default lists, a list newly added to the catalog arrives OFF, so
+    /// publishing a list never silently enables it on everyone's machine.
+    ///
+    /// A default list that leaves the catalog is dropped entirely. Publishing a catalog
+    /// without it is the only remote kill switch for a list that's rotted or gone bad,
+    /// so it can't wait on the user: an enabled list that disappears is rewritten out of
+    /// the hosts file immediately, and its download cache is deleted so a later
+    /// re-appearance starts clean.
     private func mergeDefaults() {
         let existing = Dictionary(sources.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        // The initial seed (no default lists yet) is the only time enabledByDefault is
+        // honored; later catalog additions arrive off so they never auto-enable for
+        // an existing user.
+        let seeding = !sources.contains { !$0.isCustom }
         var merged: [BlocklistSource] = catalog.map { entry in
             if var prior = existing[entry.id], !prior.isCustom {
                 prior.name = entry.name
@@ -213,12 +239,20 @@ final class AppState: ObservableObject {
                 prior.detail = URL(string: entry.url)?.host
                 return prior
             }
-            return entry.asSource(enabled: entry.enabledByDefault)
+            return entry.asSource(enabled: seeding && entry.enabledByDefault)
         }
         merged.append(contentsOf: sources.filter { $0.isCustom })
         guard merged != sources else { return }
+        let keptIDs = Set(merged.map(\.id))
+        let dropped = sources.filter { !keptIDs.contains($0.id) }
         sources = merged
         saveConfig()
+        for source in dropped {
+            store.deleteCache(sourceID: source.id)
+        }
+        if dropped.contains(where: \.enabled) {
+            applyIfActive()
+        }
     }
 
     // MARK: License

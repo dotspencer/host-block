@@ -22,9 +22,12 @@ struct MenuView: View {
         .frame(width: Theme.panelWidth)
         .background(Theme.background)
         .environment(\.colorScheme, .dark)
-        // Re-check for updates each time the menu opens, so the footer reflects a
-        // just-published release without waiting for the 30-min timer.
-        .onAppear { state.checkForUpdatesOnDemand() }
+        // On each open, refresh the update check and the catalog so the footer and the
+        // Lists tab reflect the latest without waiting for the hourly timer.
+        .onAppear {
+            state.checkForUpdatesOnDemand()
+            state.refreshCatalogOnDemand()
+        }
     }
 
     // MARK: Header
