@@ -2,33 +2,45 @@ HostBlock - Source-Available License
 
 Copyright © 2026 Spencer Smith. All rights reserved.
 
-The source code in this repository is published publicly for transparency, so
-that anyone can review exactly what HostBlock does. No open-source rights are
-granted.
+The source code in this repository is published for transparency, so that
+anyone can verify how HostBlock works internally. HostBlock is source-available,
+but no open-source rights are granted. The permissions below are the only ones
+given.
 
 Permitted:
 
 - Viewing and reading the source code.
-- Forking the repository on GitHub for the sole purpose of proposing changes
-  (pull requests) back to this project.
+- Forking the repository on GitHub, and modifying your fork, solely to prepare
+  and propose changes (pull requests) back to this project.
 
 Not permitted without prior written permission from the copyright holder:
 
-- Modifying the code or creating derivative works.
+- Modifying the code or creating derivative works, except as expressly permitted
+  above for preparing a pull request.
 - Redistributing or selling the software, in source or binary form, in whole
   or in part.
-- Removing, disabling, or circumventing the license-activation mechanism.
 
-Contributions submitted via pull request are licensed to the copyright holder
-for use in the project.
+Removing, disabling, or circumventing the license-activation mechanism is
+prohibited in all cases.
+
+Contributions: by submitting a contribution (for example, a pull request), you
+grant the copyright holder a perpetual, worldwide, non-exclusive, royalty-free,
+irrevocable, sublicensable, and transferable license to use, reproduce, modify,
+adapt, publish, distribute, and relicense your contribution and any derivative
+works of it, in source or binary form, including as part of the commercial
+product, under any license terms. You represent that you have the right to grant
+this license for the contribution you submit.
 
 HostBlock is a commercial product. Download the official build from
 https://hostblock.app and purchase a license at
 https://smithlabs.gumroad.com/l/host-block.
 
+If any provision of this license is held to be unenforceable, the remaining
+provisions remain in full force and effect.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE
-LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
