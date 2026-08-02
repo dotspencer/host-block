@@ -13,18 +13,8 @@
     "enabledByDefault": true
   },
   {
-    "id": "adaway",
-    "name": "AdAway",
-    "tags": [
-      "ads"
-    ],
-    "description": "A small, battle-tested ad list. Lighter, with minimal risk of breaking sites.",
-    "url": "https://adaway.org/hosts.txt",
-    "domainCount": 6500
-  },
-  {
     "id": "stevenblack-porn",
-    "name": "Adult Content",
+    "name": "StevenBlack Porn",
     "tags": [
       "adult"
     ],
