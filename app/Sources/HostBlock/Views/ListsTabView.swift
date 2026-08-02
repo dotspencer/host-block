@@ -16,15 +16,15 @@ struct ListsTabView: View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    if !defaultSources.isEmpty {
-                        Text("DEFAULT LISTS").sectionHeader()
-                        ForEach(defaultSources) { row($0) }
-                    }
                     if !customSources.isEmpty {
-                        Text("CUSTOM LISTS")
-                            .sectionHeader()
-                            .padding(.top, defaultSources.isEmpty ? 0 : 4)
+                        Text("CUSTOM LISTS").sectionHeader()
                         ForEach(customSources) { row($0) }
+                    }
+                    if !defaultSources.isEmpty {
+                        Text("DEFAULT LISTS")
+                            .sectionHeader()
+                            .padding(.top, customSources.isEmpty ? 0 : 4)
+                        ForEach(defaultSources) { row($0) }
                     }
                     if state.sources.isEmpty {
                         Text("No lists yet — add a custom one below.")
