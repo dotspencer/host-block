@@ -13,17 +13,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "phishing-army",
-    "name": "Phishing Army",
-    "tags": [
-      "phishing",
-      "scam"
-    ],
-    "description": "Known phishing and scam domains. Updated frequently.",
-    "url": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
-    "domainCount": 156000
-  },
-  {
     "id": "stevenblack-porn",
     "name": "StevenBlack Porn",
     "tags": [
