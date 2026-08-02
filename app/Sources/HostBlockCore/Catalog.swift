@@ -97,6 +97,10 @@ public struct CatalogFetcher: Sendable {
         var request = URLRequest(url: url)
         request.timeoutInterval = 30
         request.setValue("HostBlock/1.0 (macOS)", forHTTPHeaderField: "User-Agent")
+        // The catalog is tiny and we always want the latest. Without this, URLSession
+        // honors the host's Cache-Control (GitHub Pages sends max-age=600), so a menu
+        // open within 10 minutes of the last fetch would serve a stale cached copy.
+        request.cachePolicy = .reloadIgnoringLocalCacheData
 
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
