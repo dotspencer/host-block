@@ -53,7 +53,7 @@ public enum DomainParser {
 
         var candidate: String
         if parts.count >= 2, isIPv4(String(first)) || first.contains(":") {
-            // hosts-file format: "<ip> domain [aliases...]" — take the first hostname
+            // hosts-file format: "<ip> domain [aliases...]", so take the first hostname
             candidate = String(parts[1])
         } else {
             candidate = String(first)

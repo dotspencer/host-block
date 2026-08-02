@@ -88,7 +88,7 @@ public struct GumroadClient: Sendable {
     }
 
     /// Frees the license's uses slot so removing a license lets the same key be
-    /// re-added on the same device — otherwise it would push a Personal license past
+    /// re-added on the same device, since otherwise it would push a Personal license past
     /// its limit of 1. POSTs to the deploy-side Worker (which holds the seller token
     /// and verifies the key before decrementing). Best-effort: throws so callers can
     /// log, but removal shouldn't block on it.
@@ -125,7 +125,7 @@ public struct GumroadClient: Sendable {
     }
 
     /// A fresh, non-shared session per license call. These calls are rare (activate,
-    /// revalidate, decrement), so the cost is negligible — and a new session guarantees
+    /// revalidate, decrement), so the cost is negligible, and a new session guarantees
     /// we never inherit a poisoned connection or Happy-Eyeballs decision from
     /// `URLSession.shared`. Such stale state (formed when a host is first reached during
     /// flaky DNS) otherwise caused decrement requests to time out for the whole life of

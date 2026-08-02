@@ -107,7 +107,7 @@ struct MenuView: View {
                     .frame(height: 2)
             }
             // Full-width, fixed-height cell with a solid hit shape so a click anywhere
-            // in the tab column — including the space above and below the label — selects
+            // in the tab column, including the space above and below the label, selects
             // it. A fixed height (vs a min) keeps the bar from stretching to absorb extra
             // window height on shorter tabs.
             .frame(maxWidth: .infinity, minHeight: 36, maxHeight: 36)

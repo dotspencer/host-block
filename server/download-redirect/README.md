@@ -2,8 +2,8 @@
 
 `GET https://download.hostblock.app` → **302** to the current DMG.
 
-It reads the same `latest.json` update feed the app polls — the latest GitHub
-release's `latest.json` asset (`FEED_URL` in `wrangler.toml`) — and redirects to
+It reads the same `latest.json` update feed the app polls (the latest GitHub
+release's `latest.json` asset, `FEED_URL` in `wrangler.toml`) and redirects to
 that file's `url` (this release's DMG asset). So the download link always points
 at the latest release with no per-release changes: publishing a new GitHub
 release moves it automatically. The 302 preserves the versioned filename
@@ -11,11 +11,11 @@ release moves it automatically. The 302 preserves the versioned filename
 
 ## Deploy
 
-Needs [Bun](https://bun.sh). No dependencies to install — `bunx` fetches
+Needs [Bun](https://bun.sh). No dependencies to install, since `bunx` fetches
 `wrangler` on demand.
 
 `download.hostblock.app` is a `custom_domain` route (see `wrangler.toml`), so the
-deploy auto-provisions its proxied DNS record and TLS cert — no manual DNS.
+deploy auto-provisions its proxied DNS record and TLS cert, with no manual DNS.
 
 ```sh
 bunx wrangler login

@@ -2,8 +2,8 @@ import Foundation
 
 /// Assembles the deduplicated, sorted domain set from the enabled lists (from cache
 /// or a fresh download) and writes the staging hosts file. `Sendable` so the whole
-/// heavy pipeline — multi-megabyte cache reads, the set union, the sort, and the file
-/// write — can run off the main actor, keeping the UI responsive while a toggle
+/// heavy pipeline (multi-megabyte cache reads, the set union, the sort, and the file
+/// write) can run off the main actor, keeping the UI responsive while a toggle
 /// applies.
 public struct HostsBuilder: Sendable {
     public struct List: Sendable {

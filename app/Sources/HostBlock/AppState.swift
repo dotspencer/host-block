@@ -9,7 +9,7 @@ import SwiftUI
 /// subsystem `com.hostblock.app`) or `log stream --predicate 'subsystem == "com.hostblock.app"'`.
 private let licenseLog = Logger(subsystem: "com.hostblock.app", category: "license")
 
-/// True when stderr is a terminal — i.e. the binary was launched from a shell
+/// True when stderr is a terminal, i.e. the binary was launched from a shell
 /// rather than via `open`/Finder.
 private let stderrIsTerminal = isatty(STDERR_FILENO) != 0
 
@@ -31,14 +31,14 @@ enum AppConstants {
     static let gumroadProductID = "feMqfzhFkJO4HvlTTOeYcw=="
     /// URL of the license-decrement Cloudflare Worker (see server/license-decrement).
     /// Removing a license POSTs the key here so its uses slot is freed for a later
-    /// re-add. Leave the placeholder to disable — removal still works locally.
+    /// re-add. Leave the placeholder to disable, though removal still works locally.
     static let decrementEndpoint = "https://license-decrement.hostblock.app"
     static let purchaseURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let upgradeURL = URL(string: "https://smithlabs.gumroad.com/l/host-block")!
     static let freeLicenseURL = URL(string: "https://hostblock.app")!
     static let catalogURL = "https://hostblock.app/catalog.json"
-    /// Update feed — the latest GitHub release's `latest.json` asset. Compared to the
-    /// running version to surface an "Update available" link — a lightweight check, not
+    /// Update feed: the latest GitHub release's `latest.json` asset. Compared to the
+    /// running version to surface an "Update available" link. A lightweight check, not
     /// a Sparkle-style auto-updater. (`releases/latest/download/…` is a static CDN
     /// redirect, so no api.github.com rate limit.)
     static let updateFeedURL = "https://github.com/dotspencer/host-block/releases/latest/download/latest.json"
@@ -111,7 +111,7 @@ final class AppState: ObservableObject {
     private var reapplyRequested = false
 
     /// Demo mode (HOSTBLOCK_DEMO=1) renders the UI from seeded data without any network
-    /// or privileged side effects — used to screenshot the design against the mockups.
+    /// or privileged side effects. Used to screenshot the design against the mockups.
     private let demoMode = ProcessInfo.processInfo.environment["HOSTBLOCK_DEMO"] == "1"
 
     private init() {
@@ -242,7 +242,7 @@ final class AppState: ObservableObject {
                 info.deviceCount = result.uses
                 license = info
                 store.saveLicense(info)
-                // Activating (re)enables blocking — removal turns it off, so a fresh
+                // Activating (re)enables blocking. Removal turns it off, so a fresh
                 // activation must turn it back on before setup applies the lists.
                 protectionEnabled = true
                 selectedTab = .lists
@@ -261,11 +261,11 @@ final class AppState: ObservableObject {
 
     // Note: there is no launch-time re-validation. Refunds/chargebacks are caught at
     // activation time (verify throws .refunded), which blocks new activations on a
-    // refunded key. Already-activated devices keep working — an intentional trade to
+    // refunded key. Already-activated devices keep working, an intentional trade to
     // avoid a launch network dependency and spurious license loss on transient errors.
 
     /// User-initiated removal. Frees the device's uses slot on the license server
-    /// FIRST, and only removes the license locally if that succeeds — so a failed
+    /// FIRST, and only removes the license locally if that succeeds, so a failed
     /// decrement can't strand the count (leaving the app removed but the device still
     /// counted). On failure the license is kept and an error is surfaced to retry.
     func deactivate() {
@@ -440,7 +440,7 @@ final class AppState: ObservableObject {
         return nil
     }
 
-    /// Removes a custom (URL-added) list. Default lists can't be removed — they're
+    /// Removes a custom (URL-added) list. Default lists can't be removed, as they're
     /// always present and toggled on/off instead.
     func removeSource(id: String) {
         guard let index = sources.firstIndex(where: { $0.id == id }), sources[index].isCustom else { return }
@@ -514,7 +514,7 @@ final class AppState: ObservableObject {
         for (id, count) in result.counts {
             if let index = sources.firstIndex(where: { $0.id == id }) {
                 sources[index].domainCount = count
-                // Only advance "updated" for lists that actually fetched fresh — a
+                // Only advance "updated" for lists that actually fetched fresh. A
                 // failed download (even one that fell back to cache) keeps the old date.
                 if !result.failedIDs.contains(id) { sources[index].lastFetched = now }
             }

@@ -55,7 +55,7 @@ struct ListsTabView: View {
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.stroke))
                 // Spinner floats in an overlay so it stays out of the button's layout
-                // flow — toggling it doesn't re-lay-out the button content, which is
+                // flow, so toggling it doesn't re-lay-out the button content, which is
                 // what made MenuBarExtra re-anchor and shift the window a few pixels.
                 .overlay(alignment: .trailing) {
                     if state.isWorking {
@@ -151,7 +151,7 @@ struct ListsTabView: View {
         }
     }
 
-    /// Short count for the row: "48K" — or "48K · update failed" if the last fetch
+    /// Short count for the row: "48K", or "48K · update failed" if the last fetch
     /// errored. The full "48K domains" lives in the row's help tooltip.
     private func meta(_ source: BlocklistSource) -> String {
         let count = Theme.abbreviate(source.domainCount)

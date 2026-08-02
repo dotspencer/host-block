@@ -251,7 +251,7 @@ private struct ActivationField: View {
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(Theme.stroke))
                 // .defaultFocus (the declarative way) silently fails inside a
-                // MenuBarExtra popover — the window isn't key when it's evaluated.
+                // MenuBarExtra popover, because the window isn't key when evaluated.
                 // Setting focus a beat after appear is the reliable workaround here.
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

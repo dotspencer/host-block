@@ -164,7 +164,7 @@ final class GistURLTests: XCTestCase {
         // Already the raw content host.
         let raw = "https://gist.githubusercontent.com/user/abc123/raw/x/hosts.txt"
         XCTAssertEqual(GistURL.rawified(raw), raw)
-        // A revision/file path — left alone.
+        // A revision/file path, left alone.
         let deep = "https://gist.github.com/user/abc123/raw/abc/hosts.txt"
         XCTAssertEqual(GistURL.rawified(deep), deep)
         // Not a gist at all.
@@ -239,7 +239,7 @@ final class HostsBuilderTests: XCTestCase {
         )
 
         XCTAssertTrue(result.wroteStaging)
-        XCTAssertEqual(result.total, 3)             // a, b, c — b deduped across lists
+        XCTAssertEqual(result.total, 3)             // a, b, c with b deduped across lists
         XCTAssertEqual(result.counts["l1"], 2)
         XCTAssertEqual(result.counts["l2"], 2)
         XCTAssertTrue(result.failedIDs.isEmpty)
@@ -253,7 +253,7 @@ final class HostsBuilderTests: XCTestCase {
         try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
 
-        // A cached list whose URL can't resolve — a forced refresh must fail to
+        // A cached list whose URL can't resolve: a forced refresh must fail to
         // download but still fall back to the cache, and report the failure.
         try "a.example.com\n".write(to: cacheDir.appendingPathComponent("l1.txt"), atomically: true, encoding: .utf8)
         let builder = HostsBuilder(cacheDir: cacheDir, stagingURL: tmp.appendingPathComponent("hosts_block.txt"))

@@ -12,11 +12,11 @@ Served at `https://license-decrement.hostblock.app` (see `wrangler.toml`).
 
 ## Deploy
 
-Needs [Bun](https://bun.sh). No dependencies to install — `bunx` fetches
+Needs [Bun](https://bun.sh). No dependencies to install, since `bunx` fetches
 `wrangler` on demand.
 
 The `custom_domain` route in `wrangler.toml` auto-provisions the proxied DNS
-record + TLS cert on deploy — no manual DNS needed. Then:
+record + TLS cert on deploy, so no manual DNS is needed. Then:
 
 ```sh
 bunx wrangler login

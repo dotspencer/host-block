@@ -54,7 +54,7 @@ HostBlock ships only URLs and never bundles or redistributes a list. Each device
 
 HostBlock blocks by writing entries to your `/etc/hosts` file, which has a few inherent constraints:
 
-- **No wildcard blocking.** A hosts file matches _exact_ hostnames, so every subdomain must be listed explicitly — `*.example.com` isn't possible. DNS-based blockers (Pi-hole, AdGuard Home, NextDNS) can use wildcard rules; a hosts file can't. In practice the curated lists enumerate the known ad/tracker subdomains, so common cases are covered, but a brand-new subdomain won't be blocked until a list includes it.
+- **No wildcard blocking.** A hosts file matches _exact_ hostnames, so every subdomain must be listed explicitly, and `*.example.com` isn't possible. DNS-based blockers (Pi-hole, AdGuard Home, NextDNS) can use wildcard rules; a hosts file can't. In practice the curated lists enumerate the known ad/tracker subdomains, so common cases are covered, but a brand-new subdomain won't be blocked until a list includes it.
 - **Domain-level, not content-level.** Blocking is all-or-nothing per domain. HostBlock can't hide individual page elements, or block ads served from the same domain as the content you want. That's what in-browser filters like uBlock Origin do.
 - **Bypassable by apps with their own resolver.** Apps that use hardcoded IPs or their own DNS-over-HTTPS/TLS resolver skip `/etc/hosts` entirely, so those requests aren't affected.
 - **Large lists mean a large hosts file.** Enabling very large lists writes hundreds of thousands of entries to `/etc/hosts`. Fine on modern Macs, but worth knowing.

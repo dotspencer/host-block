@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 
 # Dedicated download host. custom_domain auto-provisions the proxied DNS record and
-# edge TLS cert for download.hostblock.app on deploy — no manual DNS needed. Any
+# edge TLS cert for download.hostblock.app on deploy, so no manual DNS is needed. Any
 # request to download.hostblock.app redirects to the current DMG.
 routes = [
   { pattern = "download.hostblock.app", custom_domain = true }

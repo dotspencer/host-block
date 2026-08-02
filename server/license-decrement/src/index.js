@@ -39,7 +39,7 @@ export default {
     if (!verify || verify.success !== true) {
       return json({ success: false, error: "invalid_license" }, 404);
     }
-    // Already at zero — nothing to free, treat as success (idempotent).
+    // Already at zero: nothing to free, treat as success (idempotent).
     if ((verify.uses ?? 0) <= 0) {
       return json({ success: true, uses: 0, decremented: false });
     }

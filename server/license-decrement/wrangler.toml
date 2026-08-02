@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 
 # Dedicated custom-domain host for this Worker. custom_domain auto-provisions the
-# proxied DNS + TLS cert, and — unlike a path route on a record with a dummy origin —
+# proxied DNS + TLS cert, and (unlike a path route on a record with a dummy origin)
 # there is NO origin to fall through to, so a request can never hang on an unreachable
 # backend (which is what the old api.hostblock.app path-route setup risked).
 routes = [
@@ -19,5 +19,5 @@ workers_dev = false
 [vars]
 GUMROAD_PRODUCT_ID = "feMqfzhFkJO4HvlTTOeYcw=="
 
-# The access token is a SECRET — never put it here. Set it with:
+# The access token is a SECRET. Never put it here. Set it with:
 #   wrangler secret put GUMROAD_ACCESS_TOKEN

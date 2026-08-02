@@ -52,7 +52,7 @@ public enum Catalog {
 
     /// Bundled fallback catalog loaded from `Resources/catalog-fallback.json`: used
     /// before the remote catalog loads, and whenever it can't be reached. Edit the
-    /// JSON to change the shipped fallback — no code change needed. The ids referenced
+    /// JSON to change the shipped fallback, no code change needed. The ids referenced
     /// by `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
     public static let bundled: [CatalogEntry] = {
         guard

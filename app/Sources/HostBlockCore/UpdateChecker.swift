@@ -3,7 +3,7 @@ import Foundation
 /// A release advertised by the update feed (`latest.json`, hosted on R2).
 public struct UpdateManifest: Decodable, Sendable {
     public let version: String
-    /// Where the "Update" affordance sends the user — the DMG, or a download page.
+    /// Where the "Update" affordance sends the user: the DMG, or a download page.
     public let url: String
     public let notes: String?
 }
@@ -11,7 +11,7 @@ public struct UpdateManifest: Decodable, Sendable {
 /// Best-effort "is there a newer version?" check. Fetches the feed, compares its
 /// version to the running app, and returns a manifest only when the feed advertises
 /// something strictly newer. Every failure path (bad URL, offline, non-200, malformed
-/// JSON, same/older version) returns nil — the check never blocks or errors the UI.
+/// JSON, same/older version) returns nil, so the check never blocks or errors the UI.
 public struct UpdateChecker: Sendable {
     private let feedURL: String
     private let currentVersion: String

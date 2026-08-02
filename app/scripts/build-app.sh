@@ -64,7 +64,7 @@ fi
 
 echo "==> Signing (Developer ID, hardened runtime)"
 # The SwiftPM ".bundle" is a resource-only folder (no executable), so it isn't
-# signed on its own — signing the app seals it as a resource.
+# signed on its own, and signing the app seals it as a resource.
 codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 

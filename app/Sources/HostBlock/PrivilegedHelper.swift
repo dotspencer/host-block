@@ -147,7 +147,7 @@ struct PrivilegedHelper {
     /// "0.0.0.0 domain" lines between the HostBlock markers in /etc/hosts.
     static let helperScript = #"""
     #!/bin/bash
-    # HostBlock privileged helper v1 — manages the HostBlock section of /etc/hosts.
+    # HostBlock privileged helper v1 - manages the HostBlock section of /etc/hosts.
     set -euo pipefail
 
     HOSTS="/etc/hosts"

@@ -10,7 +10,7 @@ let outDir = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "."
 let accent = NSColor(srgbRed: 0.29, green: 0.83, blue: 0.50, alpha: 1)   // #4AD480 header shield
 let panel = NSColor(srgbRed: 0.118, green: 0.118, blue: 0.129, alpha: 1) // #1e1e21 app background
 
-/// The shield glyph rendered into its own transparent bitmap (all offscreen — no
+/// The shield glyph rendered into its own transparent bitmap (all offscreen, no
 /// window server needed), recolored via a source-atop fill over the template.
 func shieldGlyph(color: NSColor, pointSize: CGFloat) -> NSImage? {
     let cfg = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .bold)
@@ -43,7 +43,7 @@ func makePNG(px: Int, to url: URL) {
     NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
 
     // Rounded-square "squircle" body on the macOS icon grid: dark panel fill with a
-    // soft accent wash on top — the same treatment as the menu header's shield badge.
+    // soft accent wash on top, the same treatment as the menu header's shield badge.
     let inset = size * 0.092
     let body = NSRect(x: inset, y: inset, width: size - 2 * inset, height: size - 2 * inset)
     let radius = body.width * 0.2237
