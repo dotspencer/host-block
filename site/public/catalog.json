@@ -13,16 +13,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "hagezi-nsfw",
-    "name": "HaGeZi NSFW",
-    "tags": [
-      "adult"
-    ],
-    "description": "Adult and pornographic sites.",
-    "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt",
-    "domainCount": 116000
-  },
-  {
     "id": "hagezi-normal",
     "name": "HaGeZi Normal",
     "tags": [
@@ -33,6 +23,16 @@
     "description": "Balanced all-in-one: ads, trackers, malware, phishing. Rarely breaks sites.",
     "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/multi.txt",
     "domainCount": 433000
+  },
+  {
+    "id": "hagezi-nsfw",
+    "name": "HaGeZi NSFW",
+    "tags": [
+      "adult"
+    ],
+    "description": "Adult and pornographic sites.",
+    "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt",
+    "domainCount": 116000
   },
   {
     "id": "stevenblack-unified",
