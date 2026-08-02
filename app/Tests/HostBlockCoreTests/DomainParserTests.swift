@@ -207,8 +207,8 @@ final class ModelDecodingTests: XCTestCase {
     /// The resource is synced from site/public/catalog.json, so a list added there and
     /// not reflected here trips this too.
     func testBundledCatalogLoadsFromResource() {
-        XCTAssertEqual(Catalog.bundled.count, 4)
-        XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.enabledByDefault })
+        XCTAssertEqual(Catalog.bundled.count, 3)
+        XCTAssertTrue(Catalog.bundled.contains { $0.id == "stevenblack-unified" && $0.enabledByDefault })
     }
 
     func testCatalogDecodesWrapperShape() throws {

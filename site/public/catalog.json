@@ -1,48 +1,35 @@
 [
   {
-    "id": "oisd-big",
-    "name": "OISD Big",
+    "id": "stevenblack-unified",
+    "name": "StevenBlack Unified",
     "tags": [
       "ads",
       "trackers",
       "malware"
     ],
-    "description": "Ads, trackers, and malware — tuned not to break sites. Recommended.",
-    "url": "https://big.oisd.nl/domainswild2",
-    "domainCount": 330000,
+    "description": "Ads, trackers, and malware. A well-maintained default that rarely breaks sites.",
+    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+    "domainCount": 99000,
     "enabledByDefault": true
   },
   {
-    "id": "hagezi-normal",
-    "name": "HaGeZi Normal",
+    "id": "adaway",
+    "name": "AdAway",
     "tags": [
-      "ads",
-      "malware",
-      "phishing"
+      "ads"
     ],
-    "description": "Balanced all-in-one: ads, trackers, malware, phishing. Rarely breaks sites.",
-    "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/multi.txt",
-    "domainCount": 433000
+    "description": "A small, battle-tested ad list. Lighter, with minimal risk of breaking sites.",
+    "url": "https://adaway.org/hosts.txt",
+    "domainCount": 6500
   },
   {
-    "id": "hagezi-nsfw",
-    "name": "HaGeZi NSFW",
+    "id": "stevenblack-porn",
+    "name": "Adult Content",
     "tags": [
       "adult"
     ],
-    "description": "Adult and pornographic sites.",
-    "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt",
-    "domainCount": 116000
-  },
-  {
-    "id": "stevenblack-unified",
-    "name": "StevenBlack Unified",
-    "tags": [
-      "ads",
-      "malware"
-    ],
-    "description": "The classic ads + malware hosts file.",
-    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-    "domainCount": 90000
+    "description": "Pornography and other adult sites.",
+    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts",
+    "domainCount": 76000
   }
 ]
