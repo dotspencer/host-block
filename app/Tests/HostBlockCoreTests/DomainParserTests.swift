@@ -204,6 +204,8 @@ final class ModelDecodingTests: XCTestCase {
 
     /// Guards the JSON resource: if catalog-fallback.json is unbundled or malformed,
     /// `Catalog.bundled` returns empty and this fails loudly rather than shipping broken.
+    /// The resource is synced from site/public/catalog.json, so a list added there and
+    /// not reflected here trips this too.
     func testBundledCatalogLoadsFromResource() {
         XCTAssertEqual(Catalog.bundled.count, 4)
         XCTAssertTrue(Catalog.bundled.contains { $0.id == "oisd-big" && $0.enabledByDefault })

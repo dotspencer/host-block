@@ -27,6 +27,7 @@ Requires macOS 13+ and the Xcode command line tools. Run from `app/`:
 
 ```sh
 cd app
+./scripts/sync-catalog.sh         # once after cloning; copies site/public/catalog.json in as the bundled fallback
 swift test                        # core unit tests
 ./scripts/build-app.sh            # dist/HostBlock.app, ad-hoc signed (local dev)
 ./scripts/build-app.sh --release  # Developer ID signed + notarized + DMG
@@ -47,6 +48,8 @@ rm -rf ~/Library/Application\ Support/HostBlock
 Data lives in `~/Library/Application Support/HostBlock/` (config, license, caches, staged hosts block).
 
 ## Blocklist sources
+
+The default catalog is [`site/public/catalog.json`](site/public/catalog.json), served at [hostblock.app/catalog.json](https://hostblock.app/catalog.json) and fetched by the app on launch.
 
 HostBlock ships only URLs and never bundles or redistributes a list. Each device downloads directly from the source, so distribution-triggered terms (GPLv3 copyleft, MIT notice) don't apply. Still check each list's license before adding to the default catalog, and avoid **NonCommercial (CC BY-NC)** as NC restricts commercial _use_.
 

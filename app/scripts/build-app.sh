@@ -16,6 +16,9 @@ REPO="dotspencer/host-block"
 RELEASE=0
 [[ "${1:-}" == "--release" ]] && RELEASE=1
 
+# The bundled fallback catalog is a build-time copy of site/public/catalog.json.
+scripts/sync-catalog.sh
+
 swift build -c release
 
 APP="dist/HostBlock.app"

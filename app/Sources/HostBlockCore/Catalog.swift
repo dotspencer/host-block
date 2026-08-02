@@ -51,9 +51,11 @@ public enum Catalog {
     static let fallbackResource = "catalog-fallback"
 
     /// Bundled fallback catalog loaded from `Resources/catalog-fallback.json`: used
-    /// before the remote catalog loads, and whenever it can't be reached. Edit the
-    /// JSON to change the shipped fallback, no code change needed. The ids referenced
-    /// by `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
+    /// before the remote catalog loads, and whenever it can't be reached. That file is
+    /// generated, a build-time copy of `site/public/catalog.json` (the same file served
+    /// at the remote catalog URL) made by `scripts/sync-catalog.sh`. Edit the site copy
+    /// to change the shipped fallback, no code change needed. The ids referenced by
+    /// `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
     public static let bundled: [CatalogEntry] = {
         guard
             let url = Bundle.module.url(forResource: fallbackResource, withExtension: "json"),
