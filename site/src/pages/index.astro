@@ -9,6 +9,9 @@ const githubURL = 'https://github.com/dotspencer/host-block';
 //   'Add your own from any URL or GitHub Gist',
 //   'Toggle off in one click from the menu bar',
 // ];
+
+const desc =
+  'A lightweight macOS menu bar app that updates your hosts file to block ads and malware system-wide.';
 ---
 
 <html lang="en">
@@ -16,18 +19,15 @@ const githubURL = 'https://github.com/dotspencer/host-block';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="icon" href="/appicon.png" type="image/png" />
+    <link rel="icon" href="/img/appicon.png" type="image/png" />
     <title>HostBlock - A macOS menu bar app that blocks ads and malware</title>
-    <meta
-      name="description"
-      content="A lightweight macOS menu bar app that updates your hosts file to block ads, trackers, and malware system-wide."
-    />
+    <meta name="description" content={desc} />
     <meta property="og:title" content="HostBlock" />
+    <meta property="og:description" content={desc} />
     <meta
-      property="og:description"
-      content="System-wide ad & tracker blocking from your menu bar."
+      property="og:image"
+      content="https://hostblock.app/img/og-banner.jpg"
     />
-    <meta property="og:image" content="https://hostblock.app/appicon.png" />
     <meta property="og:url" content="https://hostblock.app" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
@@ -162,7 +162,7 @@ const githubURL = 'https://github.com/dotspencer/host-block';
         margin-top: 12px;
         font-size: 1.2rem;
         color: var(--text-2);
-        max-width: 32ch;
+        max-width: 37ch;
       }
       .cta-wrap {
         display: flex;
