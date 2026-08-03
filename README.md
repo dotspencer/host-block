@@ -2,7 +2,7 @@
 
 A lightweight macOS menu bar app that updates your hosts file to block ads and malware system-wide.
 
-<img height="600" alt="Screenshot 2026-07-29 at 9 23 56 PM" src="https://github.com/user-attachments/assets/08274062-0973-477f-9ba0-b94cbcab48d8" />
+<img height="600" alt="Screenshot 2026-08-03 at 10 41 05 AM" src="https://github.com/user-attachments/assets/7caab8cc-4a9f-4abe-8505-b6ea426529a3" />
 
 Download from homepage: https://hostblock.app (or from [releases](https://github.com/dotspencer/host-block/releases))
 
