@@ -105,7 +105,7 @@ struct LicenseTabView: View {
     }
 
     private func purchasedText(_ license: LicenseInfo) -> String {
-        guard let date = license.purchaseDate else { return "—" }
+        guard let date = license.purchaseDate else { return "-" }
         return Self.dateFormatter.string(from: date)
     }
 
@@ -118,7 +118,7 @@ struct LicenseTabView: View {
         case let (type?, false): return "\(type) •••• \(last4)"
         case let (type?, true): return type
         case (nil, false): return "•••• \(last4)"
-        default: return "—"
+        default: return "-"
         }
     }
 

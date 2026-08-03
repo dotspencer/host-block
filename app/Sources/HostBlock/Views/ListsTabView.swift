@@ -27,7 +27,7 @@ struct ListsTabView: View {
                         ForEach(defaultSources) { row($0) }
                     }
                     if state.sources.isEmpty {
-                        Text("No lists yet — add a custom one below.")
+                        Text("No lists yet. Add a custom one below.")
                             .font(Theme.font(11))
                             .foregroundStyle(Theme.textSecondary)
                     }

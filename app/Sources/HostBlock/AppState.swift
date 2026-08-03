@@ -323,7 +323,7 @@ final class AppState: ObservableObject {
                 clearLicenseLocally()
             } catch {
                 logLicense("Failed to free license uses slot on removal: \(error.localizedDescription)", isError: true)
-                deactivationError = "Couldn't reach the license server to release this device. Your license was kept — check your connection and try again."
+                deactivationError = "Couldn't reach the license server to release this device, your license was kept. Check your connection and try again."
                 isDeactivating = false
             }
         }
@@ -359,7 +359,7 @@ final class AppState: ObservableObject {
     }
 
     var deviceUsage: String {
-        guard let license else { return "—" }
+        guard let license else { return "-" }
         switch license.tier {
         case .personal: return "\(license.deviceCount) / 1"
         case .pro: return "\(license.deviceCount) · unlimited"
