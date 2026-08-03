@@ -55,9 +55,9 @@ HostBlock ships only URLs and never bundles or redistributes a list. Each device
 
 ## Known limitations
 
-HostBlock blocks by writing entries to your `/etc/hosts` file, which has a few inherent constraints:
+Blocking through `/etc/hosts` has a few inherent constraints:
 
-- **No wildcard blocking.** A hosts file matches _exact_ hostnames, so every subdomain must be listed explicitly, and `*.example.com` isn't possible. DNS-based blockers (Pi-hole, AdGuard Home, NextDNS) can use wildcard rules; a hosts file can't. In practice the curated lists enumerate the known ad/tracker subdomains, so common cases are covered, but a brand-new subdomain won't be blocked until a list includes it.
-- **Domain-level, not content-level.** Blocking is all-or-nothing per domain. HostBlock can't hide individual page elements, or block ads served from the same domain as the content you want. That's what in-browser filters like uBlock Origin do.
-- **Bypassable by apps with their own resolver.** Apps that use hardcoded IPs or their own DNS-over-HTTPS/TLS resolver skip `/etc/hosts` entirely, so those requests aren't affected.
-- **Large lists mean a large hosts file.** Very large lists write hundreds of thousands of entries to `/etc/hosts`, which can potentially slow lookups on older Macs.
+- **No wildcard blocking.** A hosts file matches exact hostnames, so `*.example.com` isn't possible and every subdomain must be listed. The curated lists enumerate known ad/tracker subdomains, so common cases are covered, but a brand-new subdomain isn't blocked until a list adds it.
+- **Domain-level, not content-level.** Blocking is all-or-nothing per domain, so it can't hide page elements or block ads served from the content's own domain. That's what in-browser filters like uBlock Origin do.
+- **Bypassable by apps with their own resolver.** Apps using hardcoded IPs or their own DNS-over-HTTPS/TLS resolver skip `/etc/hosts` entirely.
+- **Large lists mean a large hosts file.** Very large lists write hundreds of thousands of entries, which might potentially slow lookups on older Macs.
