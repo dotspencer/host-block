@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="1.0.14"
+VERSION="1.0.15"
 BUILD="1"
 IDENTITY="Developer ID Application: Spencer Smith (BVXWVLHLQJ)"
 NOTARY_PROFILE="hostblock notarization"
