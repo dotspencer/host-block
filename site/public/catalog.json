@@ -13,6 +13,17 @@
     "enabledByDefault": true
   },
   {
+    "id": "phishing-army",
+    "name": "Phishing Army",
+    "tags": [
+      "phishing",
+      "scam"
+    ],
+    "description": "Known phishing and scam domains. Updated frequently.",
+    "url": "https://phishing.army/download/phishing_army_blocklist_extended.txt",
+    "domainCount": 156000
+  },
+  {
     "id": "stevenblack-porn",
     "name": "StevenBlack Porn",
     "tags": [
@@ -21,16 +32,6 @@
     "description": "Pornography and other adult sites.",
     "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts",
     "domainCount": 76000
-  },
-  {
-    "id": "stevenblack-gambling",
-    "name": "StevenBlack Gambling",
-    "tags": [
-      "gambling"
-    ],
-    "description": "Online casinos, betting, and other gambling sites.",
-    "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling-only/hosts",
-    "domainCount": 6400
   },
   {
     "id": "stevenblack-social",

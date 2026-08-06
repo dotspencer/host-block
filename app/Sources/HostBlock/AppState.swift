@@ -166,6 +166,9 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// No license, or no helper: either way nothing is being blocked yet.
+    var needsSetup: Bool { license == nil || !helperInstalled }
+
     /// Fires a fresh update check, e.g. when the menu opens. Unthrottled on purpose:
     /// it's a tiny static JSON GET (a GitHub release asset), so per-open is fine.
     func checkForUpdatesOnDemand() {

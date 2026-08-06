@@ -31,5 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // bright light ring that appears when the system is in light mode.
         NSApp.appearance = NSAppearance(named: .darkAqua)
         AppState.shared.bootstrap()
+
+        // With no Dock icon or window, a launch is invisible: two users reported
+        // "crashing" when they had just missed the shield. Only while setup is
+        // unfinished, so launch-at-login doesn't pop a panel every boot.
+        if AppState.shared.needsSetup {
+            MenuBarPanel.openWhenReady()
+        }
     }
 }
