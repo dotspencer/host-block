@@ -37,7 +37,15 @@ swift test                        # core unit tests
 
 ## Uninstall
 
-HostBlock edits `/etc/hosts` through a small root-owned helper and a scoped `/etc/sudoers.d/hostblock` rule, so it never prompts for your password. To completely remove HostBlock, run the following commands in order. It will clear HostBlock's hosts entries, then delete the helper, the rule, and app data.
+HostBlock edits `/etc/hosts` through a small root-owned helper and a scoped `/etc/sudoers.d/hostblock` rule, so it never prompts for your password. To completely remove it:
+
+```sh
+curl -fsSL https://hostblock.app/uninstall.sh | bash
+```
+
+That releases your license key, clears HostBlock's hosts entries, then deletes the helper, the sudoers rule, and app data. Removing the helper asks for your password once. Afterwards, drag HostBlock out of Applications.
+
+Releasing the key is the part worth not skipping: a Personal license is limited to 1 device, so a hand-rolled uninstall leaves the key stuck at 1 use and it won't activate again. If you're offline and want the key to stay counted against this device, add `--keep-license` (`| bash -s -- --keep-license`). The script is [`site/public/uninstall.sh`](site/public/uninstall.sh); the equivalent by hand is remove the license in the app first (License tab → Remove license), then:
 
 ```sh
 sudo /Library/PrivilegedHelperTools/com.hostblock.helper remove
