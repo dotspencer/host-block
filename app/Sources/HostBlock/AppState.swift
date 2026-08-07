@@ -169,8 +169,8 @@ final class AppState: ObservableObject {
     /// No license, or no helper: either way nothing is being blocked yet.
     var needsSetup: Bool { license == nil || !helperInstalled }
 
-    /// Protection as the UI should show it. `protectionEnabled` is only the stored
-    /// preference and starts out true, so alone it reads as blocking with no helper.
+    /// `protectionEnabled` is the stored preference and starts true, so alone it reads
+    /// as blocking with no helper.
     var isProtectionActive: Bool { protectionEnabled && helperInstalled }
 
     /// Fires a fresh update check, e.g. when the menu opens. Unthrottled on purpose:
@@ -384,11 +384,12 @@ final class AppState: ObservableObject {
             do {
                 try await helper.install()
             } catch {
-                // Declined: leave protection as it was, or the UI shows blocking
-                // while /etc/hosts is untouched.
+                // Declined: leave protection as it was, or the UI lies.
                 lastError = error.localizedDescription
                 return
             }
+            // Runs once, since the helper installs once, so a later opt-out sticks.
+            enableLaunchAtLogin()
         }
         helperInstalled = true
         lastError = nil
@@ -396,6 +397,13 @@ final class AppState: ObservableObject {
         protectionEnabled = true
         saveConfig()
         await applyBlocklists(forceRefresh: false)
+    }
+
+    /// The daily refresh only runs while the app does. Best effort, never fails setup.
+    private func enableLaunchAtLogin() {
+        guard SMAppService.mainApp.status != .enabled else { return }
+        try? SMAppService.mainApp.register()
+        launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
     // MARK: Blocklist actions
@@ -414,8 +422,8 @@ final class AppState: ObservableObject {
     func setProtection(_ enabled: Bool) {
         guard license != nil else { return }
         if demoMode { protectionEnabled = enabled; return }
-        // First time on installs the helper (the single admin prompt). runInitialSetup
-        // enables and applies on success, so declining leaves the toggle off.
+        // First time on installs the helper. runInitialSetup enables on success, so
+        // declining leaves the toggle off.
         if enabled, !helperInstalled {
             Task { await runInitialSetup() }
             return

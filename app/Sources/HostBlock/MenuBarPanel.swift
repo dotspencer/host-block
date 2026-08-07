@@ -39,8 +39,8 @@ enum MenuBarPanel {
         return true
     }
 
-    /// Dismisses the dropdown. It outlives losing key at a window level above ordinary
-    /// windows, so anything opened from inside it comes up underneath. State tracks it.
+    /// Dismisses the dropdown. It outlives losing key, above ordinary window levels, so
+    /// anything opened from inside it comes up underneath.
     static func close() {
         guard let button = statusItem?.button, button.state == .on else { return }
         button.performClick(nil)

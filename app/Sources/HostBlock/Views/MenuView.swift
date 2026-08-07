@@ -79,8 +79,7 @@ struct MenuView: View {
 
     private var subline: String {
         guard state.license != nil else { return "Not activated" }
-        // The one disabled state the user can act on, and declining the prompt is
-        // otherwise silent, so point at Preferences instead of just reporting it.
+        // The one disabled state the user can act on; declining is otherwise silent.
         if !state.helperInstalled { return "Setup required" }
         if !state.protectionEnabled { return "Blocking disabled" }
         return "\(Theme.abbreviate(state.blockedCount)) domains blocked"
