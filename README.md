@@ -41,7 +41,7 @@ swift test                        # core unit tests
 curl -fsSL https://hostblock.app/uninstall.sh | bash
 ```
 
-Releases your license key, clears HostBlock's hosts entries, then deletes the privileged helper, its `/etc/sudoers.d/hostblock` rule, and app data. Asks for your password once. Afterwards, drag HostBlock to the Trash.
+Releases your license key, clears HostBlock's hosts entries, then deletes the privileged helper, its `/etc/sudoers.d/hostblock` rule, and app data. Afterwards, drag HostBlock to the Trash.
 
 ## Blocklist sources
 
