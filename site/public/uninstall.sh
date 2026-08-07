@@ -78,4 +78,4 @@ fi
 rm -rf "$SUPPORT"
 
 echo
-echo "HostBlock is uninstalled. Drag HostBlock out of Applications to finish."
+echo "HostBlock is uninstalled. Drag HostBlock to the Trash to finish."
