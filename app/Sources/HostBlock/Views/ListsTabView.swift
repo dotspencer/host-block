@@ -66,8 +66,8 @@ struct ListsTabView: View {
                 }
             }
             .buttonStyle(.plain)
-            .disabled(!state.helperInstalled || !state.protectionEnabled || state.isWorking)
-            .opacity((!state.helperInstalled || !state.protectionEnabled) ? 0.5 : 1)
+            .disabled(!state.isProtectionActive || state.isWorking)
+            .opacity(state.isProtectionActive ? 1 : 0.5)
             .padding(14)
         }
     }
@@ -86,10 +86,10 @@ struct ListsTabView: View {
             ))
             .labelsHidden()
             .toggleStyle(GreenToggleStyle())
-            // While blocking is paused, per-list toggles do nothing to the hosts file,
+            // While blocking is off, per-list toggles do nothing to the hosts file,
             // so disable them to avoid "why isn't my list applying?" confusion.
-            .disabled(!state.protectionEnabled)
-            .opacity(state.protectionEnabled ? 1 : 0.4)
+            .disabled(!state.isProtectionActive)
+            .opacity(state.isProtectionActive ? 1 : 0.4)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(source.name)

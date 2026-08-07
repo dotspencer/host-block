@@ -6,7 +6,7 @@ struct MenuView: View {
     @ObservedObject private var state = AppState.shared
 
     private var isActive: Bool {
-        state.license != nil && state.protectionEnabled && state.helperInstalled
+        state.license != nil && state.isProtectionActive
     }
 
     var body: some View {
@@ -50,20 +50,20 @@ struct MenuView: View {
                         .foregroundStyle(Theme.textPrimary)
                     if state.license != nil {
                         StatusBadge(
-                            text: state.protectionEnabled ? "ACTIVE" : "PAUSED",
-                            color: state.protectionEnabled ? Theme.accent : Theme.textSecondary
+                            text: state.isProtectionActive ? "ACTIVE" : "PAUSED",
+                            color: state.isProtectionActive ? Theme.accent : Theme.textSecondary
                         )
                     }
                 }
                 Text(subline)
-                    .font(Theme.font(11, mono: true))
+                    .font(Theme.font(11, mono: sublineIsMono))
                     .foregroundStyle(Theme.textSecondary)
             }
 
             Spacer()
 
             Toggle("", isOn: Binding(
-                get: { AppState.shared.protectionEnabled },
+                get: { AppState.shared.isProtectionActive },
                 set: { AppState.shared.setProtection($0) }
             ))
             .labelsHidden()
@@ -74,9 +74,15 @@ struct MenuView: View {
         .padding(14)
     }
 
+    /// The setup line is prose, not a stat readout, and doesn't fit the panel in mono.
+    private var sublineIsMono: Bool { state.license == nil || state.helperInstalled }
+
     private var subline: String {
         guard state.license != nil else { return "Not activated" }
-        if !state.protectionEnabled || !state.helperInstalled { return "Blocking disabled" }
+        // The one disabled state the user can act on, and declining the prompt is
+        // otherwise silent, so point at Preferences instead of just reporting it.
+        if !state.helperInstalled { return "Setup required" }
+        if !state.protectionEnabled { return "Blocking disabled" }
         return "\(Theme.abbreviate(state.blockedCount)) domains blocked"
     }
 

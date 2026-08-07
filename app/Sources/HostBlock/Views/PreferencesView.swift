@@ -17,6 +17,7 @@ struct PreferencesView: View {
                     Text("Start HostBlock automatically when you sign in.")
                         .font(Theme.font(11))
                         .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 Toggle("", isOn: Binding(
@@ -40,6 +41,7 @@ struct PreferencesView: View {
                          : "Grant admin access once to enable blocking.")
                         .font(Theme.font(11))
                         .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 if !state.helperInstalled {
@@ -71,7 +73,8 @@ struct PreferencesView: View {
             Spacer()
         }
         .padding(18)
-        .frame(width: 334, height: 300)
+        // Fits the helper row's setup state: description plus Finish Setup button.
+        .frame(width: 430, height: 300)
         .background(Theme.background)
         .environment(\.colorScheme, .dark)
     }

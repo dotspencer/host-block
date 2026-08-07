@@ -10,6 +10,8 @@ final class WindowManager {
     private var preferences: NSWindow?
 
     func showPreferences() {
+        // Opened from inside the dropdown, which would otherwise float over it.
+        MenuBarPanel.close()
         if let existing = preferences {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)

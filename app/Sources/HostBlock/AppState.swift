@@ -169,6 +169,10 @@ final class AppState: ObservableObject {
     /// No license, or no helper: either way nothing is being blocked yet.
     var needsSetup: Bool { license == nil || !helperInstalled }
 
+    /// Protection as the UI should show it. `protectionEnabled` is only the stored
+    /// preference and starts out true, so alone it reads as blocking with no helper.
+    var isProtectionActive: Bool { protectionEnabled && helperInstalled }
+
     /// Fires a fresh update check, e.g. when the menu opens. Unthrottled on purpose:
     /// it's a tiny static JSON GET (a GitHub release asset), so per-open is fine.
     func checkForUpdatesOnDemand() {
@@ -380,12 +384,17 @@ final class AppState: ObservableObject {
             do {
                 try await helper.install()
             } catch {
+                // Declined: leave protection as it was, or the UI shows blocking
+                // while /etc/hosts is untouched.
                 lastError = error.localizedDescription
                 return
             }
         }
         helperInstalled = true
         lastError = nil
+        // Committed here, not optimistically before the prompt.
+        protectionEnabled = true
+        saveConfig()
         await applyBlocklists(forceRefresh: false)
     }
 
@@ -405,17 +414,16 @@ final class AppState: ObservableObject {
     func setProtection(_ enabled: Bool) {
         guard license != nil else { return }
         if demoMode { protectionEnabled = enabled; return }
-        // Turning protection on for the first time installs the privileged helper
-        // (the single admin prompt), then enables and applies.
+        // First time on installs the helper (the single admin prompt). runInitialSetup
+        // enables and applies on success, so declining leaves the toggle off.
         if enabled, !helperInstalled {
-            protectionEnabled = true
-            saveConfig()
             Task { await runInitialSetup() }
             return
         }
-        guard helperInstalled else { return }
         protectionEnabled = enabled
         saveConfig()
+        // Nothing was ever written to /etc/hosts, so recording the preference is enough.
+        guard helperInstalled else { return }
         Task {
             if enabled {
                 await applyBlocklists(forceRefresh: false)

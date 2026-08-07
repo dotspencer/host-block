@@ -39,6 +39,13 @@ enum MenuBarPanel {
         return true
     }
 
+    /// Dismisses the dropdown. It outlives losing key at a window level above ordinary
+    /// windows, so anything opened from inside it comes up underneath. State tracks it.
+    static func close() {
+        guard let button = statusItem?.button, button.state == .on else { return }
+        button.performClick(nil)
+    }
+
     /// Polls for the status item rather than racing it. Gives up after ~3s.
     static func openWhenReady(attemptsRemaining: Int = 30) {
         guard attemptsRemaining > 0 else { return }
