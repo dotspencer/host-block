@@ -7,4 +7,4 @@ BUILD.md
 debug
 
 # Generated at build time from site/public/catalog.json (see app/scripts/sync-catalog.sh)
-app/Sources/HostBlockCore/Resources/catalog-fallback.json
+app/Resources/catalog-fallback.json

@@ -5,10 +5,7 @@ let package = Package(
     name: "HostBlock",
     platforms: [.macOS(.v13)],
     targets: [
-        .target(
-            name: "HostBlockCore",
-            resources: [.process("Resources/catalog-fallback.json")]
-        ),
+        .target(name: "HostBlockCore"),
         .executableTarget(
             name: "HostBlock",
             dependencies: ["HostBlockCore"]

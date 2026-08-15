@@ -50,15 +50,15 @@ public struct CatalogEntry: Codable, Identifiable, Equatable, Sendable {
 public enum Catalog {
     static let fallbackResource = "catalog-fallback"
 
-    /// Bundled fallback catalog loaded from `Resources/catalog-fallback.json`: used
-    /// before the remote catalog loads, and whenever it can't be reached. That file is
-    /// generated, a build-time copy of `site/public/catalog.json` (the same file served
-    /// at the remote catalog URL) made by `scripts/sync-catalog.sh`. Edit the site copy
-    /// to change the shipped fallback, no code change needed. The ids referenced by
-    /// `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
+    /// Bundled fallback catalog loaded from `catalog-fallback.json` in the app's
+    /// Contents/Resources: used before the remote catalog loads, and whenever it can't be
+    /// reached. That file is generated, a build-time copy of `site/public/catalog.json`
+    /// (the same file served at the remote catalog URL) made by `scripts/sync-catalog.sh`.
+    /// Edit the site copy to change the shipped fallback, no code change needed. The ids
+    /// referenced by `DefaultLists.seed` must exist here; `CatalogTests` enforces that.
     public static let bundled: [CatalogEntry] = {
         guard
-            let url = Bundle.module.url(forResource: fallbackResource, withExtension: "json"),
+            let url = fallbackURL,
             let data: Data = try? Data(contentsOf: url),
             let entries: [CatalogEntry] = try? decode(data)
         else {
@@ -67,6 +67,27 @@ public enum Catalog {
         }
         return entries
     }()
+
+    /// Deliberately not a SwiftPM `resources:` target, which would mean `Bundle.module`:
+    /// its generated accessor looks for its bundle beside the .app rather than inside
+    /// Contents/Resources, then falls back to an absolute path on the machine that built
+    /// it, which both ships in the binary and traps on every other Mac.
+    static var fallbackURL: URL? {
+        if let url = Bundle.main.url(forResource: fallbackResource, withExtension: "json") {
+            return url
+        }
+        #if DEBUG
+        // `swift run` / `swift test`: no .app, so read the repo copy. Compiled out of
+        // release builds, so #filePath never reaches a shipped binary.
+        return URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()  // HostBlockCore
+            .deletingLastPathComponent()  // Sources
+            .deletingLastPathComponent()  // app
+            .appendingPathComponent("Resources/\(fallbackResource).json")
+        #else
+        return nil
+        #endif
+    }
 
     /// Decodes catalog JSON in either shape: a bare array of entries, or an object
     /// wrapping them under a `lists` key. Shared by the bundled file and remote fetch.

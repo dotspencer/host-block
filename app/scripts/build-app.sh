@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION="1.0.18"
+VERSION="1.0.19"
 BUILD="1"
 IDENTITY="Developer ID Application: Spencer Smith (BVXWVLHLQJ)"
 NOTARY_PROFILE="hostblock notarization"
@@ -25,12 +25,13 @@ APP="dist/HostBlock.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/HostBlock "$APP/Contents/MacOS/HostBlock"
+# Debug stabs record absolute source paths from the build machine, which then ship in
+# the binary. -S drops them and keeps public symbols for crash reports. Before signing,
+# since any edit invalidates the signature.
+strip -S "$APP/Contents/MacOS/HostBlock"
 
-# Copy SwiftPM resource bundles (e.g. HostBlock_HostBlockCore.bundle holding
-# catalog-fallback.json) so Bundle.module resolves them from Contents/Resources.
-for bundle in .build/release/*.bundle; do
-    [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
-done
+# Bundled fallback catalog (generated above by sync-catalog.sh), read via Bundle.main.
+cp Resources/catalog-fallback.json "$APP/Contents/Resources/catalog-fallback.json"
 
 # App icon (Finder / DMG window / Get Info). Regenerate with scripts/make-icon.sh.
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
